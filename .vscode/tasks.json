@@ -1,0 +1,33 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build SonicFoil",
+            "type": "shell",
+            "command": "C:/msys64/mingw64/bin/g++.exe",
+            "args": [
+                "-g",
+                "main.cpp",
+                "Airfoil/airfoil.cpp",
+                "Analysis/oblique_shock.cpp",
+                "Analysis/oblique_expansion.cpp",
+                "Solvers/solver.cpp",
+                "-I",
+                "Airfoil",
+                "-I",
+                "Analysis",
+                "-I",
+                "Tools",
+                "-I",
+                "Solvers",
+                "-o",
+                "main.exe"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"]
+        }
+    ]
+}
