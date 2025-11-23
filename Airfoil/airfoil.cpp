@@ -6,7 +6,7 @@
 #include <iostream>
 
 
-Airfoil::Airfoil(const std::string& filename) {
+Airfoil::Airfoil(const std::string& filename) : Forces(AerodynamicCoefficients()) {
     std::ifstream file(filename);
     std::string line; 
     bool top = true;
@@ -15,7 +15,6 @@ Airfoil::Airfoil(const std::string& filename) {
     std::getline(file, line);
     name = line;
 
-    std::cout << name;
     double x, y;
     while (std::getline(file, line)){
         std::istringstream iss(line);

@@ -12,6 +12,7 @@
                 "Analysis/oblique_shock.cpp",
                 "Analysis/oblique_expansion.cpp",
                 "Solvers/solver.cpp",
+                "Solvers/aerodynamic_forces.cpp",
                 "-I",
                 "Airfoil",
                 "-I",

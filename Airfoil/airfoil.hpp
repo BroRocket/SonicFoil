@@ -27,7 +27,7 @@ private:
     }
 
 public:
-    Segment(Cordinate start, Cordinate end) : start(start), end(end), angle(get_angle(start, end)), state(Conditions()), x_distance(std::abs(end.x - start.x)), y_distance(std::abs(end.y - start.y)) {};
+    Segment(Cordinate start, Cordinate end) : start(start), end(end), angle(get_angle(start, end)), state(Conditions()), x_distance(end.x - start.x), y_distance(end.y - start.y) {};
     Cordinate start;
     Cordinate end;
     Conditions state;
@@ -40,6 +40,17 @@ public:
     };
 };
 
+class AerodynamicCoefficients{
+    public:
+    AerodynamicCoefficients() : CL(0), Cd(0), CL_Cd(0), C_MLE(0), x_cp(0), y_cp(0) {};
+    double CL;
+    double Cd;
+    double CL_Cd;
+    double C_MLE;
+    double x_cp;
+    double y_cp; 
+};
+
 class Airfoil {
 private:
    
@@ -48,24 +59,25 @@ public:
     std::vector<Segment> bottom_segments; 
     std::vector<Cordinate> cordinates;
     std::string name; 
+    AerodynamicCoefficients Forces;
     // File is aranged trailing edge to leading edge and back around should sart and end with same point
     // should only have one zero zero point
     //Expects first line of fail to have airfoil name
     // SHould be in terms of chord length c
     Airfoil(const std::string& filename);
 
-    
     void print_airfoil() {
-        std::cout << "Top of Airfoil\n";
+        std::cout << name << "\nTop of Airfoil\n";
         for (size_t i = 0; i <top_segments.size(); i++) {
             std::cout << "Segment: Start ( " << top_segments[i].start.x << ", " << top_segments[i].start.y << " ) End: " << "( " << top_segments[i].end.x << ", " << top_segments[i].end.y << " ) Angle: " << top_segments[i].angle << " rad\n";
             std::cout << "Conditions: M = " << top_segments[i].state.M << " | p = " << top_segments[i].state.p << "Pa | T = " << top_segments[i].state.T << "K | rho = " << top_segments[i].state.rho << " kg/m^3\n";
         };
         std::cout << "Bottom of Airfoil\n";
-        for (size_t i = 0; i <top_segments.size(); i++) {
+        for (size_t i = 0; i <bottom_segments.size(); i++) {
             std::cout << "Segment: Start ( " << bottom_segments[i].start.x << ", " << bottom_segments[i].start.y << " ) End: " << "( " << bottom_segments[i].end.x << ", " << bottom_segments[i].end.y << " ) Angle: " << bottom_segments[i].angle << " rad\n";
             std::cout << "Conditions: M = " << bottom_segments[i].state.M << " | p = " << bottom_segments[i].state.p << "Pa | T = " << bottom_segments[i].state.T << "K | rho = " << bottom_segments[i].state.rho << " kg/m^3\n";
         };
+        std::cout << "Forces: CL = " << Forces.CL << " | Cd = " << Forces.Cd << " | CL/Cd = " << Forces.CL_Cd << " | Cm_LE = " << Forces.C_MLE << " | X_cp = " << Forces.x_cp << "c | Y_cp = " << Forces.y_cp << "c\n";
     };
 
 };

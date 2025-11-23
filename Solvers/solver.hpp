@@ -1,5 +1,6 @@
 #pragma once
 #include <airfoil.hpp>
+#include <aerodynamic_forces.hpp>
 
 #include <cmath>
 #include <string>
@@ -14,17 +15,18 @@ class Solver{
     double gamma;
     double alpha; // angle of attack
     double M0;
-    // all values must be static values
+   
     double P0;
     double T0;
     double rho0;
 
-    void akeret_method(Airfoil &airfoil);
+    void ackeret_method(Airfoil &airfoil);
     void waveshock_method(Airfoil &airfoil);
     void set_segment_state(Segment &airfoil_segment, double M, double P, double T, double rho);
 
     public:
     // All angles in radians
+    // all values must be static values
     Solver(Airfoil &airfoil, std::string method, double AoA, double M, double p, double T, double rho, double gamma_ = 1.4);
 
     void print_solutions(){

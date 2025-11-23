@@ -9,7 +9,7 @@ int main(){
 
     Airfoil test_airfoil("C:/Users/Brody Howard/Documents/GitHub/SonicFoil/Airfoil Files/test.dat");
     test_airfoil.print_airfoil();
-    Solver test_solver(test_airfoil, "w", 0.3, 1.9, 200000, 280, 1.255);
+    Solver test_solver(test_airfoil, "b", 0.05, 1.9, 200000, 280, 1.255);
     test_solver.print_solutions();
     
 

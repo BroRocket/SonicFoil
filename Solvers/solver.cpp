@@ -1,6 +1,7 @@
 #include <solver.hpp>
 #include <oblique_expansion.hpp>
 #include <oblique_shock.hpp>
+#include <aerodynamic_forces.hpp>
 
 Solver::Solver(Airfoil &airfoil, std::string method, double AoA, double M, double p, double T, double rho, double gamma_) 
 : alpha(AoA), M0(M), P0(p), T0(T), rho0(rho), gamma(gamma_), airfoil_template(airfoil)
@@ -10,12 +11,26 @@ Solver::Solver(Airfoil &airfoil, std::string method, double AoA, double M, doubl
         Airfoil waveAirfoil = airfoil_template;
         //solve first as then the modified arifoil copy is stored in vector
         waveshock_method(waveAirfoil);
+        AerodynamicForces(waveAirfoil, alpha, P0, M0);
         airfoils.push_back(waveAirfoil);
         // Then do friction calculations
 
     } else if ( method == "a") {
+        Airfoil ackeretfoil = airfoil_template;
+        ackeret_method(ackeretfoil);
+        AerodynamicForces(ackeretfoil, alpha, P0, M0);
+        airfoils.push_back(ackeretfoil);
 
     } else if (method == "b") {
+        Airfoil waveAirfoil = airfoil_template;
+        //solve first as then the modified arifoil copy is stored in vector
+        waveshock_method(waveAirfoil);
+        AerodynamicForces(waveAirfoil, alpha, P0, M0);
+        airfoils.push_back(waveAirfoil);
+        Airfoil ackeretfoil = airfoil_template;
+        ackeret_method(ackeretfoil);
+        AerodynamicForces(ackeretfoil, alpha, P0, M0);
+        airfoils.push_back(ackeretfoil);
 
     } else {
         throw std::invalid_argument("Invalid Method");
@@ -131,9 +146,26 @@ void Solver::waveshock_method(Airfoil &airfoil) {
     //loop bottom airfoil
 };
 
-void Solver::akeret_method(Airfoil &airfoil) {
-    
-};
+// Needs to be fixed either angle delta is wrong maybe remove negatives and/or P calc is wrong leave as Cp
+void Solver::ackeret_method(Airfoil &airfoil) {
+
+    for (Segment &seg : airfoil.top_segments){
+        double delta = seg.angle - alpha;   // Correct sign convention
+        double Cp = ( 2.0 * delta ) / std::sqrt(M0*M0 - 1.0);
+        double P  = P0 * (1.0 + ((gamma*M0*M0*Cp)/2));
+     // Use static freestream pressure
+
+        set_segment_state(seg, M0, P, T0, rho0);
+    }
+
+    for (Segment &seg : airfoil.bottom_segments){
+        double delta = seg.angle - alpha;   // Same formula, sign handles itself
+        double Cp = ( 2.0 * delta ) / std::sqrt(M0*M0 - 1.0);
+        double P  = P0 * (1.0 + ((gamma*M0*M0*Cp)/2));
+
+        set_segment_state(seg, M0, P, T0, rho0);
+    };
+}
 
 
 void Solver::set_segment_state(Segment &airfoil_segment, double M, double P, double T, double rho) {
@@ -141,4 +173,4 @@ void Solver::set_segment_state(Segment &airfoil_segment, double M, double P, dou
     airfoil_segment.state.p = P;
     airfoil_segment.state.T = T;
     airfoil_segment.state.rho = rho;
-}
+};
