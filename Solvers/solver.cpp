@@ -159,7 +159,7 @@ void Solver::ackeret_method(Airfoil &airfoil) {
     }
 
     for (Segment &seg : airfoil.bottom_segments){
-        double delta = seg.angle - alpha;   // Same formula, sign handles itself
+        double delta = alpha - seg.angle;   // Same formula, sign handles itself
         double Cp = ( 2.0 * delta ) / std::sqrt(M0*M0 - 1.0);
         double P  = P0 * (1.0 + ((gamma*M0*M0*Cp)/2));
 
