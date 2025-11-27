@@ -223,8 +223,6 @@ FrictionForces Solver::compute_surface_skin_friction(std::vector<Segment>& segs)
     double panel_drag_coefficient;
     double drag_coefficient = 0;
     double lift_coefficient = 0; 
-    double Normal_component;
-    double Axial_compoenent;
     double panel_skin_friction_coefficient;
     double s = 0;
     double transition = true; 
@@ -240,6 +238,8 @@ FrictionForces Solver::compute_surface_skin_friction(std::vector<Segment>& segs)
         double density = segs[i].state.p / (287 * T_reference);
         double Re_s = (density * (segs[i].state.M * std::sqrt(gamma * 287 * T_reference)) * distance) / dynamic_viscocity;
 
+
+        // could chang eot chekc end of plate isn't over the trnaisiton this would be smarter
         if (Re_s < 5e5) {
            
             panel_skin_friction_coefficient = 0.664 / std::sqrt(Re_s);
@@ -291,7 +291,7 @@ FrictionForces Solver::compute_surface_skin_friction(std::vector<Segment>& segs)
                     Re_s = (density * (segs[i].state.M * std::sqrt(gamma * 287 * T_reference)) * d_laminar) / dynamic_viscocity;
 
                     panel_skin_friction_coefficient = 0.664 / std::sqrt(Re_s);
-                    panel_drag_coefficient += panel_skin_friction_coefficient * ((s_crit - s)/1); // chord lenght is one
+                    panel_drag_coefficient = panel_skin_friction_coefficient * ((s_crit - s)/1); // chord lenght is one
 
                     r = iterare_recovery_factor(0.9, d_turbulent, segs[i]);
                     T_wall_adia = segs[i].state.T * (1 + r * ((gamma - 1)/2) * segs[i].state.M * segs[i].state.M);
@@ -316,10 +316,11 @@ FrictionForces Solver::compute_surface_skin_friction(std::vector<Segment>& segs)
         
         };
 
-        Axial_compoenent = panel_drag_coefficient * cos(segs[i].angle);
-        Normal_component = panel_drag_coefficient * sin(segs[i].angle);
-        drag_coefficient += Normal_component * cos(alpha) - Axial_compoenent * sin(alpha);
-        lift_coefficient += Normal_component * sin(alpha) + Axial_compoenent * cos(alpha);
+        double F_x_body = panel_drag_coefficient * cos(segs[i].angle);
+        double F_y_body = panel_drag_coefficient * sin(segs[i].angle);
+
+        drag_coefficient += F_x_body * cos(alpha) + F_y_body * sin(alpha);
+        lift_coefficient += F_y_body * cos(alpha) - F_x_body * sin(alpha);
 
         s += panel_distance;
 
@@ -339,7 +340,8 @@ void Solver::skin_friction(Airfoil &airfoil, Airfoil &result_airfoil) {
     FrictionForces bottom_friction = compute_surface_skin_friction(airfoil.bottom_segments);
 
     result_airfoil.Forces.CL = top_friction.CL + bottom_friction.CL;
-    result_airfoil.Forces.CL = top_friction.CD + bottom_friction.CD;
+    result_airfoil.Forces.Cd = top_friction.CD + bottom_friction.CD;
+    result_airfoil.Forces.CL_Cd = result_airfoil.Forces.CL/result_airfoil.Forces.Cd;
  
 }
 
