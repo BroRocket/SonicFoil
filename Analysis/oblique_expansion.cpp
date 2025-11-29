@@ -2,7 +2,7 @@
 #include <tools.hpp>
 
 ObliqueExpansion::ObliqueExpansion(double delta_, double M1_, double gamma_)
-: delta(delta_), gamma(gamma_), M1(M1_), M2(0), P2_P1(1), T2_T1(1), rho2_rho1(1)
+: delta(delta_), gamma(gamma_), M1(M1_), P2_P1(1), T2_T1(1), rho2_rho1(1), M2(0)
 {
     if (M1 <= 1.0) throw std::invalid_argument("Expansion requires M1 > 1");
     M2 = solve_M2(delta);

@@ -27,7 +27,7 @@ double ObliqueShock::solve_epsilon(double delta){
 
     // Start near Mach angle
     double eps_left = std::asin(1.0/M1) + 1e-6;
-    double eps_right = M_PI/2 - 1e-3;
+    double eps_right = 3.14159/2 - 1e-3; //set to pi
 
     // Try to locate a sign change by scanning
     const int steps = 300;

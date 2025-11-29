@@ -12,12 +12,10 @@
                 "-fPIC",
                 "-Wall",
 
-                "-I", "C:/Users/Brody Howard/AppData/Local/Programs/Python/Python310/Include",
-                "-I", "C:/Users/Brody Howard/AppData/Local/Programs/Python/Python310/lib/site-packages/pybind11/include",
-                "-I", "Airfoil",
-                "-I", "Analysis",
-                "-I", "Tools",
-                "-I", "Solvers",
+                "-I",
+                "C:/Users/Brody Howard/AppData/Local/Programs/Python/Python310/Include",
+                "-I",
+                "C:/Users/Brody Howard/AppData/Local/Programs/Python/Python310/lib/site-packages/pybind11/include",
 
                 "bindings.cpp",
                 "Airfoil/airfoil.cpp",
@@ -26,10 +24,8 @@
                 "Solvers/solver.cpp",
                 "Solvers/aerodynamic_forces.cpp",
 
-                "-L", "C:/Users/Brody Howard/AppData/Local/Programs/Python/Python310/libs",
-                "-lpython310",
-
-                "-o", "sonicfoil_backend.pyd"
+                "-o",
+                "sonicfoil_backend.pyd"
 
             ],
             "group": {

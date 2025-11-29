@@ -6,7 +6,7 @@
 #include <cmath>
 #include <vector>
 
-Solver::Solver(Airfoil &airfoil, std::string method, bool drag, double AoA, double M, double p, double T, double rho, double gamma_) 
+Solver::Solver(Airfoil &airfoil, std::string method, bool skin_drag, double AoA, double M, double p, double T, double rho, double gamma_) 
 : alpha(AoA), M0(M), P0(p), T0(T), rho0(rho), gamma(gamma_), airfoil_template(airfoil)
  {
     if (M0 < 1) throw std::invalid_argument("The freestream Mach Number must be larger than 1.");
@@ -17,7 +17,7 @@ Solver::Solver(Airfoil &airfoil, std::string method, bool drag, double AoA, doub
         AerodynamicForces(waveAirfoil, alpha, P0, M0);
         airfoils.push_back(waveAirfoil);
         // Then do friction calculations
-        if (drag == true) {
+        if (skin_drag == true) {
             Airfoil dragfoil = airfoil_template;
             skin_friction(waveAirfoil, dragfoil);
             airfoils.push_back(dragfoil);
@@ -36,7 +36,7 @@ Solver::Solver(Airfoil &airfoil, std::string method, bool drag, double AoA, doub
         AerodynamicForces(waveAirfoil, alpha, P0, M0);
         airfoils.push_back(waveAirfoil);
 
-        if (drag == true) {
+        if (skin_drag == true) {
             Airfoil dragfoil = airfoil_template;
             skin_friction(waveAirfoil, dragfoil);
             airfoils.push_back(dragfoil);

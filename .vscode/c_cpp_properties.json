@@ -7,7 +7,9 @@
                 "${workspaceFolder}/Analysis",
                 "${workspaceFolder}/Tools",
                 "${workspaceFolder}/Airfoil",
-                "${workspaceFolder}/Solvers"
+                "${workspaceFolder}/Solvers",
+                "C:\\Users\\Brody Howard\\AppData\\Local\\Programs\\Python\\Python310\\Include",
+                "C:\\Users\\Brody Howard\\AppData\\Local\\Programs\\Python\\Python310\\lib\\site-packages\\pybind11\\include"
             ],
             "defines": [
                 "_DEBUG",

@@ -1,15 +1,14 @@
 #include <aerodynamic_forces.hpp>
 
-AerodynamicForces::AerodynamicForces(Airfoil &airfoil_, double AoA, double P, double M, double gamma_) : airfoil(airfoil_), alpha(AoA), M0(M), P0(P), gamma(gamma_) {
+AerodynamicForces::AerodynamicForces(Airfoil &airfoil_, double AoA, double P, double M, double gamma_) 
+: airfoil(airfoil_), alpha(AoA), M0(M), P0(P), gamma(gamma_) {
 
     // get lift, drag, CL, Cd, and Cm about quarter chord and xcp and Cm about cp 
     // calculate F top then F bottom then F forward then F back
-    double xforce;
-    double yforce;
+    double xforce = 0;
+    double yforce = 0;
     double Normal_force = 0;
     double Axial_force = 0;
-    double Axial_force_front = 0;
-    double Axial_force_back = 0;
     
     double horizontal_distance_sum = 0;
     double x_moment = 0;
@@ -20,7 +19,7 @@ AerodynamicForces::AerodynamicForces(Airfoil &airfoil_, double AoA, double P, do
         xforce = -1 * airfoil.top_segments[i].state.p * std::cos(airfoil.top_segments[i].angle) * airfoil.top_segments[i].x_distance;
         Normal_force += xforce;
 
-        if (airfoil.top_segments[i].angle > 0) {
+        if (airfoil.top_segments[i].angle >= 0) {
             yforce = airfoil.top_segments[i].state.p * std::sin(airfoil.top_segments[i].angle) * airfoil.top_segments[i].y_distance;
         } else if (airfoil.top_segments[i].angle < 0) {
             yforce = -1 * airfoil.top_segments[i].state.p * std::sin(airfoil.top_segments[i].angle) * airfoil.top_segments[i].y_distance;
@@ -40,7 +39,7 @@ AerodynamicForces::AerodynamicForces(Airfoil &airfoil_, double AoA, double P, do
         xforce = airfoil.bottom_segments[i].state.p * std::cos(airfoil.bottom_segments[i].angle) * airfoil.bottom_segments[i].x_distance;
         Normal_force += xforce;
 
-        if (airfoil.bottom_segments[i].angle > 0) {
+        if (airfoil.bottom_segments[i].angle >= 0) {
             yforce = -1 * airfoil.bottom_segments[i].state.p * std::sin(airfoil.bottom_segments[i].angle) * airfoil.bottom_segments[i].y_distance;
         } else if (airfoil.bottom_segments[i].angle < 0) {
             yforce = airfoil.bottom_segments[i].state.p * std::sin(airfoil.bottom_segments[i].angle) * airfoil.bottom_segments[i].y_distance;
@@ -55,7 +54,6 @@ AerodynamicForces::AerodynamicForces(Airfoil &airfoil_, double AoA, double P, do
 
     double Lift = std::cos(alpha) * Normal_force - std::sin(alpha) * Axial_force;
     double Drag = std::sin(alpha) * Normal_force + std::cos(alpha) * Axial_force;
-    double L_D = Lift / Drag;
 
     if (std::abs(Normal_force) < 1e-12) { 
         airfoil.Forces.x_cp = 0;

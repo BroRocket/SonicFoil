@@ -15,10 +15,11 @@ class ObliqueShock{
 
     public:
     double epsilon;
+    double M2;
     double P2_P1;
     double T2_T1;
     double rho2_rho1;
-    double M2;
+    
     // All angles in radians
     ObliqueShock(double delta_, double M1_, double gamma_ = 1.4);
    

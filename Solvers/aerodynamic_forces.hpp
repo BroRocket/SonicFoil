@@ -12,9 +12,9 @@ class AerodynamicForces{
     private:
     Airfoil &airfoil;
     double alpha; // angle of attakc
-    double gamma;
-    double P0;
     double M0;
+    double P0;
+    double gamma;
 
     public:
     // All angles in radians

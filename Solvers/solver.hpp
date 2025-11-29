@@ -15,15 +15,14 @@ struct FrictionForces {
 
 class Solver{
     private:
-    Airfoil airfoil_template;
-    std::vector<Airfoil> airfoils;
-    double gamma;
     double alpha; // angle of attack
     double M0;
    
     double P0;
     double T0;
     double rho0;
+    double gamma;
+    Airfoil airfoil_template;
 
     void ackeret_method(Airfoil &airfoil);
     void waveshock_method(Airfoil &airfoil);
@@ -34,9 +33,10 @@ class Solver{
     FrictionForces compute_surface_skin_friction(std::vector<Segment>& segs);
 
     public:
+    std::vector<Airfoil> airfoils;
     // All angles in radians
     // all values must be static values
-    Solver(Airfoil &airfoil, std::string method, bool drag, double AoA, double M, double p, double T, double rho, double gamma_ = 1.4);
+    Solver(Airfoil &airfoil, std::string method, bool skin_drag, double AoA, double M, double p, double T, double rho, double gamma_ = 1.4);
 
     void print_solutions(){
         for (size_t i = 0; i < airfoils.size(); ++i){

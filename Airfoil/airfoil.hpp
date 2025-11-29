@@ -27,7 +27,7 @@ private:
     }
 
 public:
-    Segment(Cordinate start, Cordinate end) : start(start), end(end), angle(get_angle(start, end)), state(Conditions()), x_distance(end.x - start.x), y_distance(end.y - start.y) {};
+    Segment(Cordinate start, Cordinate end) : start(start), end(end), state(Conditions()), angle(get_angle(start, end)), x_distance(end.x - start.x), y_distance(end.y - start.y) {};
     Cordinate start;
     Cordinate end;
     Conditions state;
