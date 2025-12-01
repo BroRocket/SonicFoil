@@ -2,27 +2,35 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build SonicFoil Backend Test",
+            "label": "Build Sonicfoil Python Module",
             "type": "shell",
             "command": "C:/msys64/mingw64/bin/g++.exe",
             "args": [
-                "-g",
-                "main.cpp",
+                "-shared",
+                "-std=c++17",
+                "-O3",
+                "-fPIC",
+                "-Wall",
+
+                "-I", "C:/Users/Brody Howard/AppData/Local/Programs/Python/Python310/Include",
+                "-I", "C:/Users/Brody Howard/AppData/Local/Programs/Python/Python310/lib/site-packages/pybind11/include",
+                "-I", "Airfoil",
+                "-I", "Analysis",
+                "-I", "Tools",
+                "-I", "Solvers",
+
+                "bindings.cpp",
                 "Airfoil/airfoil.cpp",
                 "Analysis/oblique_shock.cpp",
                 "Analysis/oblique_expansion.cpp",
                 "Solvers/solver.cpp",
                 "Solvers/aerodynamic_forces.cpp",
-                "-I",
-                "Airfoil",
-                "-I",
-                "Analysis",
-                "-I",
-                "Tools",
-                "-I",
-                "Solvers",
-                "-o",
-                "main.exe"
+
+                "-L", "C:/Users/Brody Howard/AppData/Local/Programs/Python/Python310/libs",
+                "-lpython310",
+
+                "-o", "sonicfoil_backend.pyd"
+
             ],
             "group": {
                 "kind": "build",

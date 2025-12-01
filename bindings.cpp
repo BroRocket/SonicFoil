@@ -3,6 +3,7 @@
 #include "Airfoil/airfoil.hpp"
 #include "Solvers/solver.hpp"
 
+#include <optional>
 
 PYBIND11_MODULE(sonicfoil_backend, m) {
 
@@ -45,18 +46,31 @@ PYBIND11_MODULE(sonicfoil_backend, m) {
             .def_readonly("CD", &FrictionForces::CD)
             .def_readonly("CL", &FrictionForces::CL);
 
+        pybind11::class_<Result>(m, "Result")
+            .def(pybind11::init<std::optional<Airfoil>, std::optional<Airfoil>, std::optional<Airfoil>>())
+            .def_readonly("wave_solution", &Result::wave_solution)
+            .def_readonly("ackeret_solution", &Result::ackeret_solution)
+            .def_readonly("skin_friction_solution", &Result::skin_friction_solution);
+
         pybind11::class_<Solver>(m, "Solver")
-            .def(pybind11::init<Airfoil&, std::string, bool, double, double, double, double, double, double>(),
+            .def(pybind11::init<Airfoil&,  double>(),
                     pybind11::arg("airfoil"),
-                    pybind11::arg("method"),
-                    pybind11::arg("skin_drag"),
-                    pybind11::arg("AoA"),
-                    pybind11::arg("M"),
-                    pybind11::arg("p"),
-                    pybind11::arg("T"),
-                    pybind11::arg("rho"),
                     pybind11::arg("gamma_") = 1.4
                 )
-            .def_readonly("airfoil_solutions", &Solver::airfoils);
+            .def("solve_single", &Solver::solve_single,
+                pybind11::arg("method"),
+                pybind11::arg("AoA"),
+                pybind11::arg("M0"),
+                pybind11::arg("P0"),
+                pybind11::arg("T0"),
+                pybind11::arg("rho0"))
+            .def("solve_range", &Solver::solve_range,
+                pybind11::arg("method"),
+                pybind11::arg("angles"),
+                pybind11::arg("M0"),
+                pybind11::arg("P0"),
+                pybind11::arg("T0"),
+                pybind11::arg("rho0"))
+            .def_readonly("Results", &Solver::Results);
 
 };

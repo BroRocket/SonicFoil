@@ -6,55 +6,69 @@
 #include <cmath>
 #include <vector>
 
-Solver::Solver(Airfoil &airfoil, std::string method, bool skin_drag, double AoA, double M, double p, double T, double rho, double gamma_) 
-: alpha(AoA), M0(M), P0(p), T0(T), rho0(rho), gamma(gamma_), airfoil_template(airfoil)
- {
-    if (M0 < 1) throw std::invalid_argument("The freestream Mach Number must be larger than 1.");
-    if (method == "w") {
-        Airfoil waveAirfoil = airfoil_template;
+Solver::Solver(Airfoil &airfoil_template, double gamma_)
+    : airfoil_template(airfoil_template), gamma(gamma_) {};
+
+void Solver::solve_single(std::string method, double AoA, double M0, double P0, double T0, double rho0){
+
+    if (M0 < 1.0) throw std::invalid_argument("Freestream Mach must be > 1.");
+  
+    if (method[0] == 'w') {
+        Airfoil wavefoil = airfoil_template;
         //solve first as then the modified arifoil copy is stored in vector
-        waveshock_method(waveAirfoil);
-        AerodynamicForces(waveAirfoil, alpha, P0, M0);
-        airfoils.push_back(waveAirfoil);
+        waveshock_method(wavefoil, AoA, M0, P0, T0, rho0);
+        AerodynamicForces(wavefoil, AoA, P0, M0);
+
         // Then do friction calculations
-        if (skin_drag == true) {
+        if (method[1] == 'd') {
             Airfoil dragfoil = airfoil_template;
-            skin_friction(waveAirfoil, dragfoil);
-            airfoils.push_back(dragfoil);
+            skin_friction(wavefoil, dragfoil, AoA);
+            Results.push_back(Result(wavefoil, std::nullopt, dragfoil));
         };
 
-    } else if ( method == "a") {
-        Airfoil ackeretfoil = airfoil_template;
-        ackeret_method(ackeretfoil);
-        AerodynamicForces(ackeretfoil, alpha, P0, M0);
-        airfoils.push_back(ackeretfoil);
+        Results.push_back(Result(wavefoil, std::nullopt, std::nullopt));
 
-    } else if (method == "b") {
-        Airfoil waveAirfoil = airfoil_template;
+    } else if (method[0] == 'a') {
+        Airfoil ackeretfoil = airfoil_template;
+        ackeret_method(ackeretfoil, AoA, M0, P0, T0, rho0);
+        AerodynamicForces(ackeretfoil, AoA, P0, M0);
+
+        Results.push_back(Result(std::nullopt, ackeretfoil, std::nullopt));
+
+    } else if (method[0] == 'b') {
+        Airfoil wavefoil = airfoil_template;
         //solve first as then the modified arifoil copy is stored in vector
-        waveshock_method(waveAirfoil);
-        AerodynamicForces(waveAirfoil, alpha, P0, M0);
-        airfoils.push_back(waveAirfoil);
-
-        if (skin_drag == true) {
-            Airfoil dragfoil = airfoil_template;
-            skin_friction(waveAirfoil, dragfoil);
-            airfoils.push_back(dragfoil);
-        };
+        waveshock_method(wavefoil, AoA, M0, P0, T0, rho0);
+        AerodynamicForces(wavefoil, AoA, P0, M0);
 
         Airfoil ackeretfoil = airfoil_template;
-        ackeret_method(ackeretfoil);
-        AerodynamicForces(ackeretfoil, alpha, P0, M0);
-        airfoils.push_back(ackeretfoil);
+        ackeret_method(ackeretfoil, AoA, M0, P0, T0, rho0);
+        AerodynamicForces(ackeretfoil, AoA, P0, M0);
 
+        if (method[1] == 'd') {
+            Airfoil dragfoil = airfoil_template;
+            skin_friction(wavefoil, dragfoil, AoA);
+            Results.push_back(Result(wavefoil, ackeretfoil, dragfoil));
+        };
+
+        Results.push_back(Result(wavefoil, ackeretfoil, std::nullopt));
 
     } else {
         throw std::invalid_argument("Invalid Method");
     };
+};
+
+void Solver::solve_range(std::string method, const std::vector<double>& angles, double M0, double P0, double T0, double rho0) {
+
+    for (double alpha : angles) {
+        solve_single(method, alpha, M0, P0, T0, rho0);
+    }
 
 };
 
-void Solver::waveshock_method(Airfoil &airfoil) {
+
+
+void Solver::waveshock_method(Airfoil &airfoil, double alpha, double M0, double P0, double T0, double rho0) {
     //loop top airfoil
     double current_flow_angle = alpha;
     double M_prev = M0;
@@ -159,11 +173,10 @@ void Solver::waveshock_method(Airfoil &airfoil) {
         current_flow_angle = airfoil.bottom_segments[i].angle;
     }
 
-    //loop bottom airfoil
 };
 
 // Needs to be fixed either angle delta is wrong maybe remove negatives and/or P calc is wrong leave as Cp
-void Solver::ackeret_method(Airfoil &airfoil) {
+void Solver::ackeret_method(Airfoil &airfoil, double alpha, double M0, double P0, double T0, double rho0) {
 
     for (Segment &seg : airfoil.top_segments){
         double delta = seg.angle - alpha;   // Correct sign convention
@@ -218,7 +231,7 @@ double Solver::iterare_recovery_factor(double r_guess, double s, Segment seg){
     
 };
 
-FrictionForces Solver::compute_surface_skin_friction(std::vector<Segment>& segs) {
+FrictionForces Solver::compute_surface_skin_friction(std::vector<Segment>& segs, double alpha) {
 
     double panel_drag_coefficient;
     double drag_coefficient = 0;
@@ -237,7 +250,6 @@ FrictionForces Solver::compute_surface_skin_friction(std::vector<Segment>& segs)
         double dynamic_viscocity = 1.716e-5 * std::pow(T_reference/273, 1.5) * ((273 + 111)/(T_reference + 111));
         double density = segs[i].state.p / (287 * T_reference);
         double Re_s = (density * (segs[i].state.M * std::sqrt(gamma * 287 * T_reference)) * distance) / dynamic_viscocity;
-
 
         // could chang eot chekc end of plate isn't over the trnaisiton this would be smarter
         if (Re_s < 5e5) {
@@ -330,14 +342,14 @@ FrictionForces Solver::compute_surface_skin_friction(std::vector<Segment>& segs)
 
 }
 
-void Solver::skin_friction(Airfoil &airfoil, Airfoil &result_airfoil) {
+void Solver::skin_friction(Airfoil &airfoil, Airfoil &result_airfoil, double alpha) {
     // needs to be fed airfoil from shock/expansion solver
     // Uses blassius solution, with compresisble adjustmeents using an adiabatic wall temperature to compute a refernece temperature
     // for the boundary layer and then computes the adjusted viscoty using sutherlands formula. 
     // Considers both laminar and tubrulent and trnaistional boundary layer states. 
     // Computes the skin friction across both top and bottom of airfoil
-    FrictionForces top_friction = compute_surface_skin_friction(airfoil.top_segments);
-    FrictionForces bottom_friction = compute_surface_skin_friction(airfoil.bottom_segments);
+    FrictionForces top_friction = compute_surface_skin_friction(airfoil.top_segments, alpha);
+    FrictionForces bottom_friction = compute_surface_skin_friction(airfoil.bottom_segments, alpha);
 
     result_airfoil.Forces.CL = top_friction.CL + bottom_friction.CL;
     result_airfoil.Forces.Cd = top_friction.CD + bottom_friction.CD;

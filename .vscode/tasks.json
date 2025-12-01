@@ -2,22 +2,20 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build Sonicfoil Python Module",
+            "label": "Build Sonicfoil Python Module (MSVC)",
             "type": "shell",
-            "command": "C:/msys64/mingw64/bin/g++.exe",
+            "command": "cl.exe",
             "args": [
-                "-shared",
-                "-std=c++14",
-                "-O3",
-                "-fPIC",
-                "-Wall",
+                "/LD",                   
+                "/O2",                   
+                "/std:c++17",
 
-                "-I", "C:/Users/Brody Howard/AppData/Local/Programs/Python/Python310/Include",
-                "-I", "C:/Users/Brody Howard/AppData/Local/Programs/Python/Python310/lib/site-packages/pybind11/include",
-                "-I", "Airfoil",
-                "-I", "Analysis",
-                "-I", "Tools",
-                "-I", "Solvers",
+                "/I", "C:/Users/Brody Howard/AppData/Local/Programs/Python/Python310/include",
+                "/I", "C:/Users/Brody Howard/AppData/Local/Programs/Python/Python310/Lib/site-packages/pybind11/include",
+                "/I", "Airfoil",
+                "/I", "Analysis",
+                "/I", "Tools",
+                "/I", "Solvers",
 
                 "bindings.cpp",
                 "Airfoil/airfoil.cpp",
@@ -26,17 +24,11 @@
                 "Solvers/solver.cpp",
                 "Solvers/aerodynamic_forces.cpp",
 
-                "-L", "C:/Users/Brody Howard/AppData/Local/Programs/Python/Python310/libs",
-                "-lpython310",
-
-                "-o", "sonicfoil_backend.pyd"
-
+                "/link",
+                "/OUT:sonicfoil_backend.pyd",
+                "C:/Users/Brody Howard/AppData/Local/Programs/Python/Python310/libs/python310.lib"
             ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "problemMatcher": ["$gcc"]
+            "problemMatcher": ["$msCompile"]
         }
     ]
 }
