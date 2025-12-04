@@ -8,6 +8,7 @@
 #include <optional>
 #include <iostream>
 
+//FIX SKIN FRICITON DRAG AS I'M NOT SURE IT DOES WHAT i WANT NO LIFT DRAG AT ALL ANGLES AND SKIN FRICITON STAYS THE SAME
 
 struct FrictionForces {
     double CD;

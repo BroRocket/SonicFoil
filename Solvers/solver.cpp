@@ -24,10 +24,11 @@ void Solver::solve_single(std::string method, double AoA, double M0, double P0, 
             Airfoil dragfoil = airfoil_template;
             skin_friction(wavefoil, dragfoil, AoA);
             Results.push_back(Result(wavefoil, std::nullopt, dragfoil));
-        };
+        } else {
+            Results.push_back(Result(wavefoil, std::nullopt, std::nullopt));
+        }
 
-        Results.push_back(Result(wavefoil, std::nullopt, std::nullopt));
-
+        
     } else if (method[0] == 'a') {
         Airfoil ackeretfoil = airfoil_template;
         ackeret_method(ackeretfoil, AoA, M0, P0, T0, rho0);
@@ -49,9 +50,10 @@ void Solver::solve_single(std::string method, double AoA, double M0, double P0, 
             Airfoil dragfoil = airfoil_template;
             skin_friction(wavefoil, dragfoil, AoA);
             Results.push_back(Result(wavefoil, ackeretfoil, dragfoil));
-        };
+        } else {
+            Results.push_back(Result(wavefoil, ackeretfoil, std::nullopt));
+        }
 
-        Results.push_back(Result(wavefoil, ackeretfoil, std::nullopt));
 
     } else {
         throw std::invalid_argument("Invalid Method");
@@ -59,14 +61,13 @@ void Solver::solve_single(std::string method, double AoA, double M0, double P0, 
 };
 
 void Solver::solve_range(std::string method, const std::vector<double>& angles, double M0, double P0, double T0, double rho0) {
-
+    
+    Results.clear();
     for (double alpha : angles) {
         solve_single(method, alpha, M0, P0, T0, rho0);
     }
 
 };
-
-
 
 void Solver::waveshock_method(Airfoil &airfoil, double alpha, double M0, double P0, double T0, double rho0) {
     //loop top airfoil
