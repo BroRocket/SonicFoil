@@ -1,6 +1,8 @@
 #include <oblique_shock.hpp>
 #include <tools.hpp>
 
+#include <iostream>
+
 ObliqueShock::ObliqueShock(double delta_, double M1_, double gamma_) 
 : delta(delta_), gamma(gamma_), M1(M1_), epsilon(0.0), M2(0.0), P2_P1(1.0), T2_T1(1.0), rho2_rho1(1.0) 
     {
@@ -35,8 +37,8 @@ double ObliqueShock::solve_epsilon(double delta){
     for(int i = 1; i <= steps; i++){
         double e = eps_left + (eps_right - eps_left)*i/steps;
         double val = f(e);
-        if(prev * val < 0){   // sign change -> bracket found
-            return solve_bisection(f, e-(eps_right-e)/steps, e);
+        if(prev * val < 0){ 
+            return solve_bisection(f, e-(2*((eps_right - eps_left)/steps)), e); // e-2*((eps_right - eps_left)/steps)
         }
         prev = val;
     }

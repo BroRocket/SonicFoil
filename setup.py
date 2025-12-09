@@ -3,7 +3,16 @@ import pybind11
 import sys
 import os
 
-# Path to your C++ source files
+# ------------------------------
+# Detect platform
+# ------------------------------
+is_windows = sys.platform.startswith("win")
+is_macos = sys.platform == "darwin"
+is_linux = sys.platform.startswith("linux")
+
+# ------------------------------
+# Source files
+# ------------------------------
 sources = [
     "bindings.cpp",
     "Airfoil/airfoil.cpp",
@@ -21,16 +30,38 @@ include_dirs = [
     "Solvers",
 ]
 
+# ------------------------------
+# OpenMP compiler flags
+# ------------------------------
+extra_compile_args = []
+extra_link_args = []
+
+if is_windows:
+    # MSVC OpenMP flag
+    extra_compile_args.append("/std:c++17")
+    extra_compile_args.append("/openmp")
+else:
+    # GCC/Clang OpenMP flag
+    extra_compile_args.extend(["-std=c++17", "-fopenmp"])
+    extra_link_args.append("-fopenmp")
+
+# ------------------------------
+# Extension module definition
+# ------------------------------
 ext_modules = [
     Extension(
-        "sonicfoil_backend",      # module name
+        "sonicfoil_backend",
         sources=sources,
         include_dirs=include_dirs,
         language="c++",
-        extra_compile_args=["/std:c++17"],
+        extra_compile_args=extra_compile_args,
+        extra_link_args=extra_link_args,
     )
 ]
 
+# ------------------------------
+# Setup
+# ------------------------------
 setup(
     name="sonicfoil_backend",
     version="0.1",

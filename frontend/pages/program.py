@@ -9,6 +9,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from utilities import ui_messages
 from widgets.plot import CTkPlot
+from widgets.command_prompt import CTkCommand
 import sonicfoil_backend as SonicFoil
 
 
@@ -184,7 +185,9 @@ class ProgramPage(CTkFrame):
 
         # text output frame
         self.text_output_frm = CTkFrame(self)
-
+        
+        self.command_interface = CTkCommand(self.text_output_frm)
+        self.command_interface.pack(padx=10, pady=10, fill="both")
 
         self.text_output_frm.grid(row=3, column=2, columnspan=3, padx=5, pady=5, sticky="nsew")
 
@@ -221,12 +224,15 @@ class ProgramPage(CTkFrame):
             self.Airfoil = SonicFoil.Airfoil(filename)
             self.Solver = SonicFoil.Solver(self.Airfoil)
             self._update_airfoil_plot()
+            self.command_interface.show_message(f'Loaded in Airfoil: "{self.Airfoil.name}" from file: {filename}', True)
         elif os.path.exists(os.path.join(os.getcwd(), "Airfoil Files", filename)):
             self.Airfoil = SonicFoil.Airfoil(os.path.join(os.getcwd(), "Airfoil Files", filename))
             self.Solver = SonicFoil.Solver(self.Airfoil)
             self._update_airfoil_plot()
+            self.command_interface.show_message(f'Loaded in Airfoil: "{self.Airfoil.name}" from file: {os.path.join(os.getcwd(), "Airfoil Files", filename)}', True)
         else:
             ui_messages.gui_error(f'Entered filename "{filename}" does not exist')
+            return
 
 
     def _update_airfoil_plot(self) -> None:
@@ -247,8 +253,10 @@ class ProgramPage(CTkFrame):
         self.Cd_plot.clear()
         self.CL_Cd_plot.clear()
         self.C_MLE_plot.clear()
+        self.command_interface.show_message("Result plots cleared", False)
 
     def _run(self) -> None:
+        self.command_interface.show_message("Running Solver...", False)
         method = ""
         if self.wave_var.get() == "on" and self.ackeret_var.get() == "on":
             method += "b"
@@ -271,7 +279,7 @@ class ProgramPage(CTkFrame):
         density = float(self.density_entry.get()) if self.density_entry.get() != '' else 1.225
         temperature = float(self.temperature_entry.get()) if self.temperature_entry.get() != '' else 273.15
 
-        if mach <= 1 or mach > 10:
+        if mach <= 1 or mach > 5:
             ui_messages.gui_error("Mach number is out of allowbale regime. Mach Number must be within 1 < M < 10")
             return
         elif pressure <= 0:
@@ -313,6 +321,7 @@ class ProgramPage(CTkFrame):
             return
 
         self.Solver.solve_range(method, AoA, mach, pressure, temperature, density)
+        self.command_interface.show_message("Solver Complete Running", False)
         self._update_result_plots(self.Solver.Results, AoA)
 
     def _update_result_plots(self, results: list, AoA: list) -> None:
@@ -372,3 +381,5 @@ class ProgramPage(CTkFrame):
             self.CL_plot.add_line(angles, Cl["combined"], "Combined")
             self.Cd_plot.add_line(angles, Cd["combined"], "Combined")
             self.CL_Cd_plot.add_line(angles, CL_Cd["combined"], "Combined")
+
+        self.command_interface.show_message("New data plotted", True)

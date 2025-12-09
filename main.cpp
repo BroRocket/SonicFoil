@@ -4,13 +4,15 @@
 #include "Solvers/solver.hpp"
 
 #include <iostream>
+#include <math.h>
 
 int main(){
 
     Airfoil test_airfoil("C:/Users/Brody Howard/Documents/GitHub/SonicFoil/Airfoil Files/test.dat");
-    test_airfoil.print_airfoil();
-    Solver test_solver(test_airfoil, "w", true, 0.15, 2.5, 200000, 280, 1.255);
-    test_solver.print_solutions();
+    //stest_airfoil.print_airfoil();
+    Solver test_solver(test_airfoil);
+    test_solver.solve_single("w", 20*M_PI/180, 2.3, 101000, 275, 1.225);
+    //test_solver.print_solutions();
     
 
     // ObliqueShock shock(test.top_segments[0].angle, 1.7);

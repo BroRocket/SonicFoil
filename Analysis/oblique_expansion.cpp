@@ -1,6 +1,8 @@
 #include <oblique_expansion.hpp>
 #include <tools.hpp>
 
+#include <iostream>
+
 ObliqueExpansion::ObliqueExpansion(double delta_, double M1_, double gamma_)
 : delta(delta_), gamma(gamma_), M1(M1_), P2_P1(1), T2_T1(1), rho2_rho1(1), M2(0)
 {
@@ -36,7 +38,6 @@ double ObliqueExpansion::solve_M2(double delta){
         }
         if (fa * fb > 0) throw std::runtime_error("Cannot bracket root for M2 in prandtl_meyer");
     }
-
     return solve_bisection(f, a, b);
 };
 

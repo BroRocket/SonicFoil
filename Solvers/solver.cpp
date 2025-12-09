@@ -5,11 +5,12 @@
 
 #include <cmath>
 #include <vector>
+#include <omp.h>
 
 Solver::Solver(Airfoil &airfoil_template, double gamma_)
     : airfoil_template(airfoil_template), gamma(gamma_) {};
 
-void Solver::solve_single(std::string method, double AoA, double M0, double P0, double T0, double rho0){
+Result Solver::solve_single(std::string method, double AoA, double M0, double P0, double T0, double rho0){
 
     if (M0 < 1.0) throw std::invalid_argument("Freestream Mach must be > 1.");
   
@@ -18,14 +19,15 @@ void Solver::solve_single(std::string method, double AoA, double M0, double P0, 
         //solve first as then the modified arifoil copy is stored in vector
         waveshock_method(wavefoil, AoA, M0, P0, T0, rho0);
         AerodynamicForces(wavefoil, AoA, P0, M0);
+        wavefoil.print_airfoil(); // Remove later
 
         // Then do friction calculations
         if (method[1] == 'd') {
             Airfoil dragfoil = airfoil_template;
             skin_friction(wavefoil, dragfoil, AoA);
-            Results.push_back(Result(wavefoil, std::nullopt, dragfoil));
+            return Result(wavefoil, std::nullopt, dragfoil);
         } else {
-            Results.push_back(Result(wavefoil, std::nullopt, std::nullopt));
+            return Result(wavefoil, std::nullopt, std::nullopt);
         }
 
         
@@ -34,7 +36,7 @@ void Solver::solve_single(std::string method, double AoA, double M0, double P0, 
         ackeret_method(ackeretfoil, AoA, M0, P0, T0, rho0);
         AerodynamicForces(ackeretfoil, AoA, P0, M0);
 
-        Results.push_back(Result(std::nullopt, ackeretfoil, std::nullopt));
+        return Result(std::nullopt, ackeretfoil, std::nullopt);
 
     } else if (method[0] == 'b') {
         Airfoil wavefoil = airfoil_template;
@@ -49,9 +51,9 @@ void Solver::solve_single(std::string method, double AoA, double M0, double P0, 
         if (method[1] == 'd') {
             Airfoil dragfoil = airfoil_template;
             skin_friction(wavefoil, dragfoil, AoA);
-            Results.push_back(Result(wavefoil, ackeretfoil, dragfoil));
+            return Result(wavefoil, ackeretfoil, dragfoil);
         } else {
-            Results.push_back(Result(wavefoil, ackeretfoil, std::nullopt));
+            return Result(wavefoil, ackeretfoil, std::nullopt);
         }
 
 
@@ -63,8 +65,10 @@ void Solver::solve_single(std::string method, double AoA, double M0, double P0, 
 void Solver::solve_range(std::string method, const std::vector<double>& angles, double M0, double P0, double T0, double rho0) {
     
     Results.clear();
-    for (double alpha : angles) {
-        solve_single(method, alpha, M0, P0, T0, rho0);
+
+    for (int i = 0; i < angles.size(); i++) {
+        Result r = solve_single(method, angles[i], M0, P0, T0, rho0);
+        Results.push_back(r);
     }
 
 };
@@ -239,7 +243,7 @@ FrictionForces Solver::compute_surface_skin_friction(std::vector<Segment>& segs,
     double lift_coefficient = 0; 
     double panel_skin_friction_coefficient;
     double s = 0;
-    double transition = true; 
+    bool transition = true; 
 
     for (size_t i = 0; i < segs.size(); ++i){
 

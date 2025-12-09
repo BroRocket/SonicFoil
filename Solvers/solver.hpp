@@ -17,12 +17,16 @@ struct FrictionForces {
 
 class Result {
     public:
+    Result() 
+        : wave_solution(std::nullopt), ackeret_solution(std::nullopt), skin_friction_solution(std::nullopt) {};
+
     Result(std::optional<Airfoil> wave, std::optional<Airfoil> ackeret, std::optional<Airfoil> skin_friction) : 
     wave_solution(wave), ackeret_solution(ackeret), skin_friction_solution(skin_friction) {};
 
     std::optional<Airfoil> wave_solution; 
     std::optional<Airfoil> ackeret_solution; 
     std::optional<Airfoil> skin_friction_solution;
+    
 };
 
 class Solver{
@@ -45,7 +49,7 @@ class Solver{
     // all values must be static values
     Solver(Airfoil &airfoil_template, double gamma_ = 1.4);
 
-    void solve_single(std::string method, double AoA, double M0, double P0, double T0, double rho0);
+    Result solve_single(std::string method, double AoA, double M0, double P0, double T0, double rho0);
 
     void solve_range(std::string method, const std::vector<double>& angles, double M0, double P0, double T0, double rho0);
 
@@ -54,9 +58,12 @@ class Solver{
     void print_solutions(){
         for (size_t i = 0; i < Results.size(); ++i){
             std::cout << "Airfoil " << i + 1 << ":\n";
-            //Results[i].wave_solution.print_airfoil();
-            //Results[i].ackeret_solution.print_airfoil();
-            //Results[i].skin_friction_solution.print_airfoil();
+            // if (Results[i].wave_solution.has_value()){
+            //     Results[i].wave_solution.print_airfoil()
+            // };
+            
+            // Results[i].ackeret_solution.print_airfoil();
+            // Results[i].skin_friction_solution.print_airfoil();
         };
     };
    

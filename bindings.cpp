@@ -37,6 +37,7 @@ PYBIND11_MODULE(sonicfoil_backend, m) {
 
         pybind11::class_<Airfoil>(m, "Airfoil")
             .def(pybind11::init<const std::string &>())
+            .def_readonly("name", &Airfoil::name)
             .def_readonly("Forces", &Airfoil::Forces)
             .def_readonly("top_segments", &Airfoil::top_segments)
             .def_readonly("bottom_segments", &Airfoil::bottom_segments)
