@@ -31,7 +31,7 @@ class CTkCommand(CTkTextbox):
         self._switch_state()
         self.insert('end', f"\n{message}")
         if last_msg is True:
-            self.insert('end', self.directory)
+            self.insert('end', "\n" + self.directory)
             self._switch_state()
         self.see('end')
 

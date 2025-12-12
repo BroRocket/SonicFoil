@@ -321,7 +321,13 @@ class ProgramPage(CTkFrame):
             return
 
         self.Solver.solve_range(method, AoA, mach, pressure, temperature, density)
-        self.command_interface.show_message("Solver Complete Running", False)
+
+        if self.Solver.success is True:
+            self.command_interface.show_message("Solver Complete Running", False)
+        else:
+            self.command_interface.show_message(f"Solver encountered following error:\n{self.Solver.error_msg}\n Computed values up to error will be plotted", False)
+            AoA = AoA[:len(self.Solver.Results)]
+
         self._update_result_plots(self.Solver.Results, AoA)
 
     def _update_result_plots(self, results: list, AoA: list) -> None:

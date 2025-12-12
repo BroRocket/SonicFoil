@@ -11,7 +11,18 @@ int main(){
     Airfoil test_airfoil("C:/Users/Brody Howard/Documents/GitHub/SonicFoil/Airfoil Files/test.dat");
     //stest_airfoil.print_airfoil();
     Solver test_solver(test_airfoil);
-    test_solver.solve_single("w", 20*M_PI/180, 2.3, 101000, 275, 1.225);
+    //test_solver.solve_single("w", 20*M_PI/180, 2.3, 101000, 275, 1.225);
+    std::vector<double> angles;
+    double max_angle = 15 * M_PI / 180;
+    double step_size = 0.005 * M_PI / 180;
+    double temp = 0;
+    while (temp < max_angle) {
+        angles.push_back(temp);
+        temp = temp + step_size;
+    };
+    angles.push_back(max_angle);
+
+    test_solver.solve_range("w", angles, 2.3, 101000, 275, 1.225);
     //test_solver.print_solutions();
     
 

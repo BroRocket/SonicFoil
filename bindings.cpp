@@ -72,6 +72,8 @@ PYBIND11_MODULE(sonicfoil_backend, m) {
                 pybind11::arg("P0"),
                 pybind11::arg("T0"),
                 pybind11::arg("rho0"))
-            .def_readonly("Results", &Solver::Results);
+            .def_readonly("Results", &Solver::Results)
+            .def_readonly("success", &Solver::success)
+            .def_readonly("error_msg", &Solver::error_msg);
 
 };

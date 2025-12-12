@@ -5,10 +5,12 @@
 
 #include <cmath>
 #include <vector>
-#include <omp.h>
+
+// #include <omp.h> // experimenting wiht multiprocessingf
+// #include <chrono> //delete later
 
 Solver::Solver(Airfoil &airfoil_template, double gamma_)
-    : airfoil_template(airfoil_template), gamma(gamma_) {};
+    : success(true), error_msg("N/A"), airfoil_template(airfoil_template), gamma(gamma_) {};
 
 Result Solver::solve_single(std::string method, double AoA, double M0, double P0, double T0, double rho0){
 
@@ -19,7 +21,7 @@ Result Solver::solve_single(std::string method, double AoA, double M0, double P0
         //solve first as then the modified arifoil copy is stored in vector
         waveshock_method(wavefoil, AoA, M0, P0, T0, rho0);
         AerodynamicForces(wavefoil, AoA, P0, M0);
-        wavefoil.print_airfoil(); // Remove later
+        //wavefoil.print_airfoil(); // Remove later
 
         // Then do friction calculations
         if (method[1] == 'd') {
@@ -64,13 +66,31 @@ Result Solver::solve_single(std::string method, double AoA, double M0, double P0
 
 void Solver::solve_range(std::string method, const std::vector<double>& angles, double M0, double P0, double T0, double rho0) {
     
+    //auto start = std::chrono::high_resolution_clock::now();
+    success = true;
+    error_msg = "N/A";
     Results.clear();
 
-    for (int i = 0; i < angles.size(); i++) {
-        Result r = solve_single(method, angles[i], M0, P0, T0, rho0);
-        Results.push_back(r);
-    }
-
+    try {
+        for (int i = 0; i < angles.size(); i++) {
+            Result r = solve_single(method, angles[i], M0, P0, T0, rho0);
+            Results.push_back(r);
+        }
+    } catch (const std::runtime_error& e) {
+        success = false;
+        error_msg = e.what();
+    } catch (const std::exception& e) {
+        success = false;
+        error_msg = e.what();
+    } catch (const std::invalid_argument& e) {
+        success = false;
+        error_msg = e.what();
+    } catch (...) {
+        std::cerr << " Unkown Error " << std::endl;
+    };
+    // auto end = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<double> elapsed = end - start;
+    // std::cout << "Solver time = " << elapsed.count() << " seconds\n";
 };
 
 void Solver::waveshock_method(Airfoil &airfoil, double alpha, double M0, double P0, double T0, double rho0) {

@@ -44,6 +44,8 @@ class Solver{
     FrictionForces compute_surface_skin_friction(std::vector<Segment>& segs, double alpha);
 
     public:
+    bool success;
+    std::string error_msg;
     std::vector<Result> Results;
     // All angles in radians
     // all values must be static values
