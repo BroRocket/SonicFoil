@@ -1,1 +1,1 @@
-__all__ = ["start", "program"]
+__all__ = ["start", "program", "airfoil_editor"]

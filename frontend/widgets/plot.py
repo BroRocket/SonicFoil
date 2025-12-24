@@ -39,8 +39,7 @@ class CTkPlot(ctk.CTkFrame):
 
         # ---- Canvas in frame ----
         self.canvas_widget.pack(fill="both", expand=True)
-
-    # ============ Public API ============
+        
 
     def add_line(self, x, y, label=None, **plot_kwargs):
         """Add a line to the plot with optional legend support."""
@@ -67,3 +66,6 @@ class CTkPlot(ctk.CTkFrame):
             """Redraw with fixed margins to prevent cutting."""
             self.fig.subplots_adjust(left=0.12, bottom=0.16, top=0.92)
             self.canvas.draw()
+
+    def save(self, filename: str):
+        self.fig.savefig(filename, bbox_inches="tight")

@@ -79,6 +79,24 @@ class CTkCommand(CTkTextbox):
         elif cmd == "exit" or cmd == "quit":
             self.quit()
             return ""
+        
+        elif cmd.startswith("save "):
+            cmd = cmd[5:]
+            inputs = cmd[5:].split()
+
+            configs = []
+            for input in inputs:
+                if input[0] == "-":
+                    configs.append(input[1:])
+
+            if cmd.startswith("data "):
+               self.master.master._save_data(configs)
+
+            elif cmd.startswith("plot"):
+                self.master.master._save_plots(configs)
+                
+            return ""
+
 
         return f"Unknown command: {cmd}"
 

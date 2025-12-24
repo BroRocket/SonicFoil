@@ -1,7 +1,7 @@
 
 import os
-
 import math
+import csv
 from customtkinter import *
 from tkinter import Menu, filedialog, StringVar
 import matplotlib.pyplot as plt
@@ -13,6 +13,20 @@ from widgets.command_prompt import CTkCommand
 import sonicfoil_backend as SonicFoil
 
 
+def new_solver_page():
+    window = CTkToplevel()
+    window.title("SonicFoil")
+    page = ProgramPage(window)
+    page.pack(padx=5, pady=5, fill="both", expand=True)
+
+def open_airfoil():
+    filename = filedialog.askopenfilename(initialdir = os.path.join(os.getcwd(), "Airfoil Files"), title = "Select a File", filetypes = (("Airfoil files", "*.dat*"),("all files", "*.*")))
+    window = CTkToplevel()
+    page = ProgramPage(window)
+    page.pack(padx=5, pady=5, fill="both", expand=True) 
+    page.load_airfoil_file_opt.set(filename)
+    page._load_airfoil()
+
 
 #self.master is root!
 #ADD XCP AND YCP PLOTS
@@ -23,19 +37,19 @@ class ProgramPage(CTkFrame):
 
         self.Airfoils = []
         self.Solvers = []
-        self.Solver = None
 
         self.grid_columnconfigure((0 , 1 , 2, 3, 4), weight=1)
-        self.grid_rowconfigure((0, 1, 2, 3), weight=1)
+        self.grid_rowconfigure((0, 1, 2, 3, 4, 5, 6), weight=1)
         
         #Configure bar
         self.menu = Menu(self.master)
         self.file_menu = Menu(self.menu, tearoff=False)
         self.menu.add_cascade(label='File', menu=self.file_menu)
-        self.file_menu.add_command(label='New', command=None) # add command
-        self.file_menu.add_command(label='Open...', command=None) # add command
+        self.file_menu.add_command(label='New', command=new_solver_page) 
+        self.file_menu.add_command(label='Open...', command=open_airfoil) 
+        self.file_menu.add_command(label='Airfoil Editor', command=self.master.airfoil_editor_page)
         self.file_menu.add_separator()
-        self.file_menu.add_command(label='Settings', command=None)
+        self.file_menu.add_command(label='Settings', command=None) # add command
         self.file_menu.add_command(label='Exit', command=self.master.quit)
         helpmenu = Menu(self.menu, tearoff=False)
         self.menu.add_cascade(label='Help', menu=helpmenu)
@@ -47,7 +61,7 @@ class ProgramPage(CTkFrame):
         ##########################################
         #load airfoil frame
         self.load_airfoil_frm = CTkFrame(self)
-        self.load_airfoil_frm.grid_columnconfigure((0 , 1 , 2), weight=1)
+        self.load_airfoil_frm.grid_columnconfigure((0 , 1 , 2, 3), weight=1)
         self.load_airfoil_frm.grid_rowconfigure((0, 1, 2), weight=1)
 
         self.load_airfoil_title_lbl = CTkLabel(self.load_airfoil_frm, text="Load Airfoil", font=("Arial", 16), anchor="center")
@@ -55,14 +69,17 @@ class ProgramPage(CTkFrame):
         self.load_airfoil_file_opt = CTkOptionMenu(self.load_airfoil_frm, font=("Arial", 12), values= ["..."] + self._get_available_projects())
         self.load_airfoil_browse_file_btn = CTkButton(self.load_airfoil_frm, text="Browse", font=("Arial", 12), command=self._browse_files, anchor="w")
         self.load_airfoil_load_btn = CTkButton(self.load_airfoil_frm, text="Load Airfoil", font=("Arial", 14), command=self._load_airfoil)
+        self.clear_airfoild_btn = CTkButton(self.load_airfoil_frm, text="Clear Airfoils", font=("Arial", 14), command=self._clear_airfoils)
 
-        self.load_airfoil_title_lbl.grid(row=0, column=0, columnspan=3, padx=5, pady=5, sticky="nsew")
+
+        self.load_airfoil_title_lbl.grid(row=0, column=0, columnspan=4, padx=5, pady=5, sticky="nsew")
         self.load_airfoil_file_lbl.grid(row=1, column=0, padx=(5, 1), pady=5, sticky="ew")
-        self.load_airfoil_file_opt.grid(row=1, column=1, padx=5, pady=5, sticky = "ew")
-        self.load_airfoil_browse_file_btn.grid(row=1, column=2, padx=(1, 5), pady=5, sticky="w")
-        self.load_airfoil_load_btn.grid(row=2, column=1, padx=5, pady=5, sticky = "ew")
+        self.load_airfoil_file_opt.grid(row=1, column=1, columnspan = 2, padx=5, pady=5, sticky = "ew")
+        self.load_airfoil_browse_file_btn.grid(row=1, column=3, padx=(1, 5), pady=5, sticky="w")
+        self.load_airfoil_load_btn.grid(row=2, column=0, columnspan = 2, padx=5, pady=5, sticky = "ew")
+        self.clear_airfoild_btn.grid(row=2, column=2, columnspan = 2, padx=5, pady=5, sticky = "ew")
 
-        self.load_airfoil_frm.grid(row=0, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
+        self.load_airfoil_frm.grid(row=0, rowspan=2, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
 
         ###########################
         # input frame
@@ -151,7 +168,7 @@ class ProgramPage(CTkFrame):
         self.solve_btn = CTkButton(self.inputs_frm, text="Run Solver", font=("Arial", 12), command=self._run, anchor="center")
         self.solve_btn.grid(row=4, column=1, columnspan=2, padx=10, pady=10, sticky="nsew")
 
-        self.inputs_frm.grid(row=1, column=0, rowspan=3, columnspan=2, padx=5, pady=5, sticky="nsew")
+        self.inputs_frm.grid(row=2, column=0, rowspan=5, columnspan=2, padx=5, pady=5, sticky="nsew")
 
         #############################3
         # plotter frame (use tabview)
@@ -183,22 +200,18 @@ class ProgramPage(CTkFrame):
         self.C_MLE_plot.pack(padx=0, pady=0, fill="both", expand=True)
 
         self.plots.grid(row=0, column=0, sticky="nsew")
-        self.plots_frm.grid(row=0, column=2, rowspan=3, columnspan=3, padx=5, pady=5, sticky="nsew")
 
-        # text output frame
+        self.plots_frm.grid(row=0, column=2, rowspan=5, columnspan=3, padx=5, pady=5, sticky="nsew")
+
+
+        ##### command interface frame
         self.text_output_frm = CTkFrame(self)
-        
+
         self.command_interface = CTkCommand(self.text_output_frm)
         self.command_interface.pack(padx=10, pady=10, fill="both")
 
-        self.text_output_frm.grid(row=3, column=2, columnspan=3, padx=5, pady=5, sticky="nsew")
+        self.text_output_frm.grid(row=5, rowspan=2, column=2, columnspan=3, padx=5, pady=5, sticky="nsew")
 
-        # self.configure_bar = CTkFrame(self)
-        # self.grid_columnconfigure((0 , 1 , 2, 3), weight=1)
-        # self.grid_rowconfigure((0), weight=1)
-
-
-        # self.configure_bar.grid(row=0, column=0, columnspan=4, padx=1, pady=1, sticky="nsew")
 
     def _get_available_projects(self) -> list:
         cur_dir = os.path.join(os.getcwd(), "Airfoil Files")
@@ -227,19 +240,41 @@ class ProgramPage(CTkFrame):
             if not filename.endswith(".dat"):
                 ui_messages.gui_error(f'Entered filename "{filename}" is not the proper ".dat" format')
                 return
-            self.Airfoils.append(SonicFoil.Airfoil(filename))
-            self.Solvers.append(SonicFoil.Solver(self.Airfoils[-1]))
-            self._update_airfoil_plot()
-            self.command_interface.show_message(f'Loaded in Airfoil: "{self.Airfoils[-1].name}" from file: {filename}', True)
+            filepath = filename   
         elif os.path.exists(os.path.join(os.getcwd(), "Airfoil Files", filename)):
-            self.Airfoils.append(SonicFoil.Airfoil(os.path.join(os.getcwd(), "Airfoil Files", filename)))
-            self.Solvers.append(SonicFoil.Solver(self.Airfoils[-1]))
-            self._update_airfoil_plot()
-            self.command_interface.show_message(f'Loaded in Airfoil: "{self.Airfoils[-1].name}" from file: {os.path.join(os.getcwd(), "Airfoil Files", filename)}', True)
+            filepath = os.path.join(os.getcwd(), "Airfoil Files", filename)
         else:
             ui_messages.gui_error(f'Entered filename "{filename}" does not exist')
             return
+        
+        try:
+            airfoil = SonicFoil.Airfoil(filepath)
+        except:
+            ui_messages.gui_error(f'Aifoil File "{filename}" is not in correct format to be loaded in.')
+            return
 
+        if self.__check_airfoil_duplicate(airfoil) is False:
+            self.Airfoils.append(airfoil)
+            self.Solvers.append(SonicFoil.Solver(self.Airfoils[-1]))
+            self._update_airfoil_plot()
+            self.command_interface.show_message(f'Loaded in Airfoil: "{self.Airfoils[-1].name}" from file: {filepath}', True)
+        else:
+            self.command_interface.show_message(f"Airfoil with same name already loaded into the Solver. Check you haven't loaded in the same arifoil or rename the new airfoil.", True)
+
+    def __check_airfoil_duplicate(self, new_airfoil) -> bool:
+        for airfoil in self.Airfoils:
+            if new_airfoil.name == airfoil.name:
+                return True
+        return False
+        
+    def _clear_airfoils(self) -> None:
+        if len(self.Airfoils) > 0:
+            self.Airfoils = []
+            self.Solvers = []
+
+            self.airfoil_plot.clear()
+            self._clear_results_plots()
+            self.command_interface.show_message("Airofils Cleared", True)
 
     def _update_airfoil_plot(self) -> None:
         linestyle_options = ["solid", "dotted", "dashed", "dashdot"]
@@ -270,7 +305,7 @@ class ProgramPage(CTkFrame):
         self.command_interface.show_message("Result plots cleared", False)
 
     def _run(self) -> None:
-        self.command_interface.show_message("Running Solver...", False)
+        self.command_interface.show_message("Starting Task...", False)
         method = ""
         if self.wave_var.get() == "on" and self.ackeret_var.get() == "on":
             method += "b"
@@ -334,77 +369,272 @@ class ProgramPage(CTkFrame):
             ui_messages.gui_error("Please load in an Airfoil to use the solver")
             return
 
+        self._clear_results_plots()
+
         for i, solver in enumerate(self.Solvers):
             solver.solve_range(method, AoA, mach, pressure, temperature, density)
 
             if solver.success is True:
                 self.command_interface.show_message(f"Solver Completed Running for Airofil '{self.Airfoils[i].name}'", False)
-                self._update_result_plots(AoA)
+                self._update_result_plots(solver, AoA, i)
             else:
                 self.command_interface.show_message(f"Solver encountered following error on Airfoil '{self.Airfoils[i].name}':\n{solver.error_msg}\n Computed values up to error will be plotted", False)
-                self._update_result_plots(AoA[:len(solver.Results)])
+                self._update_result_plots(solver, AoA[:len(solver.Results)], i)
+        
+        self.command_interface.show_message("Task Complete\n", True)
 
-    def _update_result_plots(self, AoA: list) -> None:
+    def _update_result_plots(self, solver, AoA: list, solver_index: int) -> None:
 
+        self.Results = []
         linestyle_options = ["solid", "dotted", "dashed", "dashdot"]
-        self._clear_results_plots()
 
-        for i, solver in enumerate(self.Solvers):
+        Cl = {"wave": [], "ackeret": [], "friction": [], "combined": []}
+        Cd = {"wave": [], "ackeret": [], "friction": [], "combined": []}
+        CL_Cd = {"wave": [], "ackeret": [], "friction": [], "combined": []}
+        C_Mle = {"wave": [], "ackeret": []} # curently no Cmle for friction
+        #currently no xcp and ycp
 
-            Cl = {"wave": [], "ackeret": [], "friction": [], "combined": []}
-            Cd = {"wave": [], "ackeret": [], "friction": [], "combined": []}
-            CL_Cd = {"wave": [], "ackeret": [], "friction": [], "combined": []}
-            C_Mle = {"wave": [], "ackeret": []} # curently no Cmle for friction
-            #currently no xcp and ycp
+        for result in solver.Results:
+            wave = result.wave_solution
+            ackeret = result.ackeret_solution
+            friction = result.skin_friction_solution
+            if wave is not None:
+                Cl["wave"].append(wave.Forces.CL)
+                Cd["wave"].append(wave.Forces.Cd)
+                CL_Cd["wave"].append(wave.Forces.CL_Cd)
+                C_Mle["wave"].append(wave.Forces.C_MLE)
+            if ackeret is not None:
+                Cl["ackeret"].append(ackeret.Forces.CL)
+                Cd["ackeret"].append(ackeret.Forces.Cd)
+                CL_Cd["ackeret"].append(ackeret.Forces.CL_Cd)
+                C_Mle["ackeret"].append(ackeret.Forces.C_MLE)
+            if friction is not None:
+                Cl["friction"].append(friction.Forces.CL)
+                Cd["friction"].append(friction.Forces.Cd)
+                CL_Cd["friction"].append(friction.Forces.CL_Cd)
+        
+        if Cl["wave"] != [] and Cl["friction"] != []:
+            for i in range(len(Cl["wave"])):
+                Cl["combined"].append(Cl["wave"][i]+Cl["friction"][i])
+                Cd["combined"].append(Cd["wave"][i]+Cd["friction"][i])
+                CL_Cd["combined"].append(CL_Cd["wave"][i]+CL_Cd["friction"][i])
 
-            for result in solver.Results:
-                wave = result.wave_solution
-                ackeret = result.ackeret_solution
-                friction = result.skin_friction_solution
-                if wave is not None:
-                    Cl["wave"].append(wave.Forces.CL)
-                    Cd["wave"].append(wave.Forces.Cd)
-                    CL_Cd["wave"].append(wave.Forces.CL_Cd)
-                    C_Mle["wave"].append(wave.Forces.C_MLE)
-                if ackeret is not None:
-                    Cl["ackeret"].append(ackeret.Forces.CL)
-                    Cd["ackeret"].append(ackeret.Forces.Cd)
-                    CL_Cd["ackeret"].append(ackeret.Forces.CL_Cd)
-                    C_Mle["ackeret"].append(ackeret.Forces.C_MLE)
-                if friction is not None:
-                    Cl["friction"].append(friction.Forces.CL)
-                    Cd["friction"].append(friction.Forces.Cd)
-                    CL_Cd["friction"].append(friction.Forces.CL_Cd)
+        angles = [rad * 180 / math.pi for rad in AoA]
+
+        self.Results.append({"airfoil": self.Airfoils[solver_index].name, "AoA": angles, "CL": Cl, "Cd": Cd, "CL_Cd": CL_Cd, "C_MLE": C_Mle})
+
+        if Cl["wave"] != []:
+            self.CL_plot.add_line(angles, Cl["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
+            self.Cd_plot.add_line(angles, Cd["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
+            self.CL_Cd_plot.add_line(angles, CL_Cd["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
+            self.C_MLE_plot.add_line(angles, C_Mle["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
+        if Cl["ackeret"] != []:
+            self.CL_plot.add_line(angles, Cl["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
+            self.Cd_plot.add_line(angles, Cd["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
+            self.CL_Cd_plot.add_line(angles, CL_Cd["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
+            self.C_MLE_plot.add_line(angles, C_Mle["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
+        if Cl["friction"] != []:
+            self.CL_plot.add_line(angles, Cl["friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+            self.Cd_plot.add_line(angles, Cd["friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+            self.CL_Cd_plot.add_line(angles, CL_Cd["friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+        if Cl["combined"] != []:
+            self.CL_plot.add_line(angles, Cl["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
+            self.Cd_plot.add_line(angles, Cd["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
+            self.CL_Cd_plot.add_line(angles, CL_Cd["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
+
+        self.command_interface.show_message(f"New data plotted for Airfoil '{self.Airfoils[solver_index].name}'", False)
+
+
+    def _save_data(self, configs: list[str]):
+        """
+        Save simulation data for all airfoils to CSV files.
+
+        configs:
+            - ["all"]    : save both coefficients and segment conditions
+            - ["coeff"]  : save only aerodynamic coefficients
+            - ["cond"]   : save only segment-level conditions (P, M, T, rho)
+            - or any combination, e.g. ["coeff", "cond"]
+        """
+        self.command_interface.show_message("Saving Data...", False)
+
+        # Base folder: ./Results/Data/<airfoil_name>/
+        filebase = os.path.join(os.getcwd(), "Results", "Data")
+
+        for airfoil in self.Airfoils:
+            airfoil_dir = os.path.join(filebase, airfoil.name)
+            os.makedirs(airfoil_dir, exist_ok=True)
+
+        if not getattr(self, "Results", None):
+            self.command_interface.show_message("No data to save.", True)
+            return
+
+        lower_configs = [c.lower() for c in configs]
+
+        # ---------- Helper: save aerodynamic coefficients ----------
+
+        def save_coefficients():
+            """
+            For each dataset in self.Results, write one CSV per method
+
+            Columns:
+                AoA_deg, CL, Cd, CL/Cd, [C_MLE if available]
+            """
+            for dataset in self.Results:
+                os.makedirs(os.path.join(filebase, dataset["airfoil"]), exist_ok=True)
+                aoa_deg = dataset["AoA"]
+
+                CL = dataset["CL"]
+                Cd = dataset["Cd"]
+                CL_Cd = dataset["CL_Cd"]
+                C_MLE = dataset["C_MLE"]  # only has "wave" and "ackeret"
+
+                method_to_filename = {
+                    "wave":     "shock_expansion_coefficients.csv",
+                    "ackeret":  "ackeret_coefficients.csv",
+                    "friction": "skin_friction_coefficients.csv",
+                    "combined": "combined_coefficients.csv",
+                }
+
+                for method, filename in method_to_filename.items():
+                    cl_list = CL.get(method, [])
+                    if not cl_list:
+                        # No data for this method for this dataset
+                        continue
+
+                    cd_list = Cd.get(method, [])
+                    clcd_list = CL_Cd.get(method, [])
+                    c_mle_list = C_MLE.get(method, None)  # may be None
+
+                    # Basic sanity check on lengths
+                    n = len(aoa_deg)
+                    if not (len(cl_list) == len(cd_list) == len(clcd_list) == n):
+                        # If mismatched, skip to avoid broken CSV
+                        continue
+
+                    filepath = os.path.join(os.path.join(filebase, dataset["airfoil"]), filename)
+
+                    with open(filepath, "w", newline="") as f:
+                        writer = csv.writer(f)
+
+                        header = ["AoA_deg", "CL", "Cd", "CL/Cd"]
+                        include_c_mle = (
+                            c_mle_list is not None
+                            and hasattr(c_mle_list, "__len__")
+                            and len(c_mle_list) == n
+                        )
+                        if include_c_mle:
+                            header.append("C_MLE")
+                        writer.writerow(header)
+
+                        for i in range(n):
+                            row = [
+                                aoa_deg[i],
+                                cl_list[i],
+                                cd_list[i],
+                                clcd_list[i],
+                            ]
+                            if include_c_mle:
+                                row.append(c_mle_list[i])
+                            writer.writerow(row)
+
+        # ---------- Helper: save per-segment flow conditions ----------
+
+        def save_conditions():
+            pass
+            # condition_to_filename = {
+            #         "M":    "Segment Machs.csv",
+            #         "p":    "Segment Pressures.csv",
+            #         "T":    "Segment Temperatures.csv",
+            #         "rho":  "Segment Densities.csv",
+            # }
+
+            # for ind, dataset in enumerate(self.Results):
+            #     os.makedirs(os.path.join(filebase, dataset["airfoil"]), exist_ok=True)
+            #     aoa_deg = dataset["AoA"]
+
+            #     for result in self.Solvers[ind].Results:
+            #         wave = result.wave_solution
+            #         ackeret = result.ackeret_solution
+            #         # need to identify the top and bottom segments and extract the state of each segment (M, P, T and rho)
+                
+            #     if dataset["CL"]["wave"] != []:
+            #         for method, filename in condition_to_filename.items():
+
+            #             filepath = os.path.join(os.path.join(filebase, dataset["airfoil"]), "Shock and Expansion " + filename)
+
+            #             with open(filepath, "w", newline="") as f:
+            #                 writer = csv.writer(f)
+
+            #                 header = ["AoA_deg"] + [f'Top Segment {i}' for i in range(len(self.Airfoils[ind].top_segments))] + [f'Bottom Segment {i}' for i in range(len(self.Airfoils[ind].bottom_segments))]
+            #                 writer.writerow(header)
+
+            #                 for i in range(n):
+            #                     row = [
+            #                         aoa_deg[i],
+            #                         cl_list[i],
+            #                         cd_list[i],
+            #                         clcd_list[i],
+            #                     ]
+            #                     if include_c_mle:
+            #                         row.append(c_mle_list[i])
+            #                     writer.writerow(row)
+
+
+            #     if dataset["CL"]["ackeret"] != []:
+
+        if "all" in lower_configs:
+            save_coefficients()
+            save_conditions()
+        else:
+            if "coeff" in lower_configs:
+                save_coefficients()
+            if "cond" in lower_configs:
+                save_conditions()
+
+        self.command_interface.show_message("Data saved to CSV files.", True)
             
-            if Cl["wave"] != [] and Cl["friction"] != []:
-                for i in range(len(Cl["wave"])):
-                    Cl["combined"].append(Cl["wave"][i]+Cl["friction"][i])
-                    Cd["combined"].append(Cd["wave"][i]+Cd["friction"][i])
-                    CL_Cd["combined"].append(CL_Cd["wave"][i]+CL_Cd["friction"][i])
 
-            self.Results = {"CL": Cl, "Cd": Cd, "CL_Cd": CL_Cd, "C_MLE": C_Mle}
+    def _save_plots(self, configs : list[str]):
+        self.command_interface.show_message("Saving Plots...", False)
+        # Create directory to save plot
+        temp = ""
+        for airfoil in self.Airfoils:
+            temp += airfoil.name + " & "
+        temp = temp[:-3]
+        filebase = os.path.join(os.getcwd(), "Results", "Plots", temp)
 
-            angles = [rad * 180 / math.pi for rad in AoA]
+        if not os.path.exists(filebase):
+            os.makedirs(filebase)
 
-            if Cl["wave"] != []:
-                self.CL_plot.add_line(angles, Cl["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[i])
-                self.Cd_plot.add_line(angles, Cd["wave"], "Shock/Expansion", color="b", linestyle=linestyle_options[i])
-                self.CL_Cd_plot.add_line(angles, CL_Cd["wave"], "Shock/Expansion", color="g", linestyle=linestyle_options[i])
-                self.C_MLE_plot.add_line(angles, C_Mle["wave"], "Shock/Expansion", color="y", linestyle=linestyle_options[i])
-            if Cl["ackeret"] != []:
-                self.CL_plot.add_line(angles, Cl["ackeret"], "Ackeret", color="r", linestyle=linestyle_options[i])
-                self.Cd_plot.add_line(angles, Cd["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[i])
-                self.CL_Cd_plot.add_line(angles, CL_Cd["ackeret"], "Ackeret", color="g", linestyle=linestyle_options[i])
-                self.C_MLE_plot.add_line(angles, C_Mle["ackeret"], "Ackeret", color="y", linestyle=linestyle_options[i])
-            if Cl["friction"] != []:
-                self.CL_plot.add_line(angles, Cl["friction"], "Skin Friction", color="r", linestyle=linestyle_options[i])
-                self.Cd_plot.add_line(angles, Cd["friction"], "Skin Friction", color="b", linestyle=linestyle_options[i])
-                self.CL_Cd_plot.add_line(angles, CL_Cd["friction"], "Skin Friction", color="g", linestyle=linestyle_options[i])
-            if Cl["combined"] != []:
-                self.CL_plot.add_line(angles, Cl["combined"], "Combined", color="r", linestyle=linestyle_options[i])
-                self.Cd_plot.add_line(angles, Cd["combined"], "Combined", color="b", linestyle=linestyle_options[i])
-                self.CL_Cd_plot.add_line(angles, CL_Cd["combined"], "Combined", color="g", linestyle=linestyle_options[i])
+        name = f' Mach = {self.mach_entry.get()} P = {self.pressure_entry.get()} T = {self.temperature_entry.get()} rho = {self.density_entry.get()}'
 
-            self.command_interface.show_message(f"New data plotted for Airfoil '{self.Airfoils[i].name}'", False)
-            
-        self.command_interface.show_message("\n", True)
+        if len(configs) > 0:
+            if configs[0].lower() == "all":
+                #save all plots
+                self.airfoil_plot.save(os.path.join(filebase, "Airfoil Template"))
+                self.CL_plot.save(os.path.join(filebase, "CL" + name))
+                self.Cd_plot.save(os.path.join(filebase, "Cd" + name))
+                self.CL_Cd_plot.save(os.path.join(filebase, "CL/Cd" + name))
+                self.C_MLE_plot.save(os.path.join(filebase, "C_MLE" + name))
+
+            else:
+                plot_mapping = {"airfoil": self.airfoil_plot, "cl": self.CL_plot, "cd": self.Cd_plot, "cl/cd": self.CL_Cd_plot, "c_mle": self.C_MLE_plot}
+                for config in configs:
+                    if config.lower() in plot_mapping.keys():
+                        if config.lower() == "airfoil":
+                            plot_mapping[config.lower()].save(os.path.join(filebase, "Airfoil Template"))
+                        else:
+                            plot_mapping[config.lower()].save(os.path.join(filebase, str(config) + name))
+                    else:
+                        self.command_interface.show_message(f"Config '{config}' does not exist, Skipping. Only allowed plot configs are: '-all', '-airfoil', '-Cl', '-Cd', '-Cl/Cd', and '-C_mle'", False)
+
+            self.command_interface.show_message("All requested plots saved", True)
+        
+        self.command_interface.show_message("No configuration specified, please specify which plots to save.", True)
+
+        
+
+                        
+
+
+        
