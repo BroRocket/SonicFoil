@@ -1,4 +1,4 @@
-#include <airfoil.hpp>
+#include "Airfoil/airfoil.hpp"
 #include <fstream>
 #include <sstream>
 #include <algorithm>

@@ -1,4 +1,4 @@
-#include <aerodynamic_forces.hpp>
+#include "Solvers/aerodynamic_forces.hpp"
 
 AerodynamicForces::AerodynamicForces(Airfoil &airfoil_, double AoA, double P, double M, double gamma_) 
 : airfoil(airfoil_), alpha(AoA), M0(M), P0(P), gamma(gamma_) {

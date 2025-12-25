@@ -1,3 +1,9 @@
+####### TO RUN #### (use in terminal)
+# cd backend
+# python setup.py build_ext --inplace
+
+
+
 from setuptools import setup, Extension
 import pybind11
 import sys
@@ -24,6 +30,7 @@ sources = [
 
 include_dirs = [
     pybind11.get_include(),
+    ".",              # backend root
     "Airfoil",
     "Analysis",
     "Tools",

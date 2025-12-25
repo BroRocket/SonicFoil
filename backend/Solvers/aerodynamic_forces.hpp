@@ -1,5 +1,6 @@
 #pragma once
-#include <airfoil.hpp>
+
+#include "Airfoil/airfoil.hpp"
 
 #include <cmath>
 #include <string>

@@ -1,6 +1,6 @@
 from customtkinter import *
 
-from widgets.plot import CTkPlot
+from frontend.widgets.plot import CTkPlot
 
 class CTkAirfoilDataEntry(CTkScrollableFrame):
     def __init__(self, master: CTk, plot: CTkPlot, **kwargs):

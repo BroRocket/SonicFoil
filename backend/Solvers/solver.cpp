@@ -1,7 +1,7 @@
-#include <solver.hpp>
-#include <oblique_expansion.hpp>
-#include <oblique_shock.hpp>
-#include <aerodynamic_forces.hpp>
+#include "Solvers/solver.hpp"
+#include "Analysis/oblique_expansion.hpp"
+#include "Analysis/oblique_shock.hpp"
+#include "Solvers/aerodynamic_forces.hpp"
 
 #include <cmath>
 #include <vector>
@@ -200,7 +200,6 @@ void Solver::waveshock_method(Airfoil &airfoil, double alpha, double M0, double 
 
 };
 
-// Needs to be fixed either angle delta is wrong maybe remove negatives and/or P calc is wrong leave as Cp
 void Solver::ackeret_method(Airfoil &airfoil, double alpha, double M0, double P0, double T0, double rho0) {
 
     for (Segment &seg : airfoil.top_segments){
@@ -221,7 +220,7 @@ void Solver::ackeret_method(Airfoil &airfoil, double alpha, double M0, double P0
     };
 }
 
-double Solver::iterare_recovery_factor(double r_guess, double s, Segment seg){
+double Solver::iterare_recovery_factor(double r_guess, double s, Segment& seg){
 
     double r = r_guess;
     double r_old = 0;
@@ -247,7 +246,7 @@ double Solver::iterare_recovery_factor(double r_guess, double s, Segment seg){
         if (Re_s < 5e5) {
             r = sqrt(Prandtl_number);
         } else {
-            r = std::pow(Prandtl_number, 1/3);
+            r = cbrt(Prandtl_number); 
         };
         num_iterations += 1;
     };
@@ -268,7 +267,7 @@ FrictionForces Solver::compute_surface_skin_friction(std::vector<Segment>& segs,
     for (size_t i = 0; i < segs.size(); ++i){
 
         double panel_distance = segs[i].distance();
-        double distance = s + panel_distance/2;
+        double distance = s + panel_distance;
         double r = iterare_recovery_factor(0.9, distance, segs[i]);
         double T_wall_adia = segs[i].state.T * (1 + r * ((gamma - 1)/2) * segs[i].state.M * segs[i].state.M);
         double T_reference = segs[i].state.T * (0.5 + 0.039 * segs[i].state.M * segs[i].state.M + 0.5 * (T_wall_adia/segs[i].state.T));
@@ -300,9 +299,9 @@ FrictionForces Solver::compute_surface_skin_friction(std::vector<Segment>& segs,
                     // iterate to find s_crit, then find Reynolds numbers for the laminar and turbulent zone and then find ther coresponding skin friction and add them
 
                     double s_crit_old = 0;
-                    double num_iterations = 0;
+                    int num_iterations = 0;
 
-                    while (fabs(s_crit - s_crit_old) > 1e-3 && num_iterations < 200){
+                    while (fabs(s_crit - s_crit_old) > 1e-3 && num_iterations < 500){
 
                         r = iterare_recovery_factor(0.9, s_crit, segs[i]);
 
@@ -338,7 +337,7 @@ FrictionForces Solver::compute_surface_skin_friction(std::vector<Segment>& segs,
                     Re_s = (density * (segs[i].state.M * std::sqrt(gamma * 287 * T_reference)) * d_turbulent) / dynamic_viscocity;
 
                     panel_skin_friction_coefficient = 0.0576 / std::pow(Re_s, 0.2);
-                    panel_drag_coefficient = panel_skin_friction_coefficient * ((s + panel_distance - s_crit)/1); // chord lenght is one
+                    panel_drag_coefficient += panel_skin_friction_coefficient * ((s + panel_distance - s_crit)/1); // chord lenght is one
 
                 };
 

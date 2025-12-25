@@ -76,6 +76,10 @@ class CTkCommand(CTkTextbox):
             self.clear_screen()
             return ""
         
+        elif cmd.startswith("Airfoil Editor"):
+            self.master.master.master.airfoil_editor_page()
+            return ""
+        
         elif cmd == "exit" or cmd == "quit":
             self.quit()
             return ""
@@ -186,7 +190,7 @@ class CTkCommand(CTkTextbox):
 
     def replace_current_line(self, text):
         self.delete("end-1l", "end")
-        self.insert("end", self.directory + text)
+        self.insert("end", "\n" + self.directory + text)
         self.mark_set("insert", "end")
 
         

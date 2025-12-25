@@ -7,10 +7,11 @@ from tkinter import Menu, filedialog, StringVar
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-from utilities import ui_messages
-from widgets.plot import CTkPlot
-from widgets.command_prompt import CTkCommand
+from frontend.utilities import ui_messages
+from frontend.widgets.plot import CTkPlot
+from frontend.widgets.command_prompt import CTkCommand
 import sonicfoil_backend as SonicFoil
+
 
 
 def new_solver_page():
@@ -227,7 +228,7 @@ class ProgramPage(CTkFrame):
         return ["None"]
     
     def _browse_files(self) -> None:
-        filename = filedialog.askopenfilename(initialdir = "/", title = "Select a File", filetypes = (("Airfoil files", "*.dat*"),("all files", "*.*")))
+        filename = filedialog.askopenfilename(initialdir = os.path.join(os.getcwd(), "Airfoil Files"), title = "Select a File", filetypes = (("Airfoil files", "*.dat*"),("all files", "*.*")))
         self.load_airfoil_file_opt.set(filename)
         
     def _load_airfoil(self) -> None:

@@ -2,7 +2,7 @@ from typing import Any
 from customtkinter import *
 import os
 
-from utilities import ui_messages
+from frontend.utilities import ui_messages
 
 class StartPage(CTkFrame):
     def __init__(self, master: CTk, func: Any, **kwargs):

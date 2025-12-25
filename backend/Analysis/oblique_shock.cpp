@@ -1,6 +1,5 @@
-#include <oblique_shock.hpp>
-#include <tools.hpp>
-
+#include "Analysis/oblique_shock.hpp"
+#include "Tools/tools.hpp"
 #include <iostream>
 
 ObliqueShock::ObliqueShock(double delta_, double M1_, double gamma_) 

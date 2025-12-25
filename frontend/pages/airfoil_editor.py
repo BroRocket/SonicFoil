@@ -5,9 +5,9 @@ from tkinter import Menu, filedialog, StringVar
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-from utilities import ui_messages
-from widgets.airfoil_data_entry import CTkAirfoilDataEntry
-from widgets.plot import CTkPlot
+from frontend.utilities import ui_messages
+from frontend.widgets.airfoil_data_entry import CTkAirfoilDataEntry
+from frontend.widgets.plot import CTkPlot
 import sonicfoil_backend as SonicFoil
 
 
@@ -22,6 +22,7 @@ class AirfoilEditor(CTkFrame):
    def __init__(self, master: CTk, **kwargs):
       super().__init__(master, **kwargs)
 
+      self.Airfoil_filename = "airfoil"
       # add menu like program has so you can load in an airofil if prefered.
       # otherwise let them choose an airofil name, then set the points using entry widgets and alow for deleting points. automatically update the plot with points. 
       # Try to maybe have editing through the plot somehow.
@@ -128,6 +129,7 @@ class AirfoilEditor(CTkFrame):
 
    def open_airfoil(self):
       #open existing airfoil file
+      
       filename = filedialog.askopenfilename(initialdir = os.path.join(os.getcwd(), "Airfoil Files"), title = "Select a File", filetypes = (("Airfoil files", "*.dat*"),("all files", "*.*")))
       if not filename.endswith(".dat"):
          ui_messages.gui_error(f'Entered filename "{filename}" is not the proper ".dat" format')
@@ -139,6 +141,7 @@ class AirfoilEditor(CTkFrame):
          ui_messages.gui_error(f'Aifoil File "{filename}" is not in correct format to be loaded in.')
          return
       
+      self.Airfoil_filename = (filename[:-4]).split("\\")[-1]
       self.AirfoilNameVAR.set(airfoil.name)
       
       x = []
@@ -177,7 +180,7 @@ class AirfoilEditor(CTkFrame):
          ui_messages.gui_error("Airfoil must include the origin (0, 0) as the 'middle' point which seperates top and bottom of airfoil.")
          return
 
-      filename = filedialog.asksaveasfilename(defaultextension=".dat", initialdir = os.path.join(os.getcwd(), "Airfoil Files"), title = "Select a File", filetypes = (("Airfoil files", "*.dat*"),("all files", "*.*")))
+      filename = filedialog.asksaveasfilename(defaultextension=".dat", initialdir = os.path.join(os.getcwd(), "Airfoil Files"), initialfile = self.Airfoil_filename, filetypes = (("Airfoil files", "*.dat*"),("all files", "*.*")))
       if not filename:
          return
       

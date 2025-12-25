@@ -1,7 +1,7 @@
 from typing import Any, Tuple
 from customtkinter import *
 
-from pages import program, start, airfoil_editor
+from frontend.pages import program, start, airfoil_editor
 
 class Application(CTk):
     def __init__(self, Title: str = "SonicFoil", color_theme: str = "blue", apearance_mode: str = "dark", fg_color: str | Tuple[str] | None = None, **kwargs):
@@ -33,5 +33,5 @@ class Application(CTk):
         page = airfoil_editor.AirfoilEditor(window)
         page.pack(padx=5, pady=5, fill="both", expand=True)
 
-if __name__ == "__main__":
+if __name__ == "__main__": 
     Application()

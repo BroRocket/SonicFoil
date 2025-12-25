@@ -1,6 +1,6 @@
 #pragma once
-#include <airfoil.hpp>
-#include <aerodynamic_forces.hpp>
+#include "Airfoil/airfoil.hpp"
+#include "Solvers/aerodynamic_forces.hpp"
 
 #include <cmath>
 #include <string>
@@ -37,7 +37,7 @@ class Solver{
     void waveshock_method(Airfoil &airfoil, double alpha, double M0, double P0, double T0, double rho0);
     void set_segment_state(Segment &airfoil_segment, double M, double P, double T, double rho);
 
-    double iterare_recovery_factor(double r_guess, double s, Segment seg);
+    double iterare_recovery_factor(double r_guess, double s, Segment& seg);
     void skin_friction(Airfoil &airfoil, Airfoil &result_airfoil, double alpha);
     FrictionForces compute_surface_skin_friction(std::vector<Segment>& segs, double alpha);
 
