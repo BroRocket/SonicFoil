@@ -6,9 +6,6 @@
 #include <cmath>
 #include <vector>
 
-// #include <omp.h> // experimenting wiht multiprocessingf
-// #include <chrono> //delete later
-
 Solver::Solver(Airfoil &airfoil_template, double gamma_)
     : success(true), error_msg("N/A"), airfoil_template(airfoil_template), gamma(gamma_) {};
 

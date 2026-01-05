@@ -3,6 +3,8 @@
 #include <stdexcept>
 #include <limits>
 
+#include "Tools/matrix.hpp"
+
 template<typename F>
 double solve_bisection(F f, double a, double b, double tol = 1e-8, int max_iter = 1000) {
     double fa = f(a);
@@ -20,3 +22,4 @@ double solve_bisection(F f, double a, double b, double tol = 1e-8, int max_iter 
     }
     return 0.5 * (a + b);
 }
+

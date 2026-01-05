@@ -418,30 +418,51 @@ class ProgramPage(CTkFrame):
             for i in range(len(Cl["wave"])):
                 Cl["combined"].append(Cl["wave"][i]+Cl["friction"][i])
                 Cd["combined"].append(Cd["wave"][i]+Cd["friction"][i])
-                CL_Cd["combined"].append(CL_Cd["wave"][i]+CL_Cd["friction"][i])
+                CL_Cd["combined"] = [combined_cl / combined_cd for combined_cl, combined_cd in zip(Cl["combined"], Cd["combined"])]
 
         angles = [rad * 180 / math.pi for rad in AoA]
 
         self.Results.append({"airfoil": self.Airfoils[solver_index].name, "AoA": angles, "CL": Cl, "Cd": Cd, "CL_Cd": CL_Cd, "C_MLE": C_Mle})
 
-        if Cl["wave"] != []:
-            self.CL_plot.add_line(angles, Cl["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
-            self.Cd_plot.add_line(angles, Cd["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
-            self.CL_Cd_plot.add_line(angles, CL_Cd["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
-            self.C_MLE_plot.add_line(angles, C_Mle["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
-        if Cl["ackeret"] != []:
-            self.CL_plot.add_line(angles, Cl["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
-            self.Cd_plot.add_line(angles, Cd["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
-            self.CL_Cd_plot.add_line(angles, CL_Cd["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
-            self.C_MLE_plot.add_line(angles, C_Mle["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
-        if Cl["friction"] != []:
-            self.CL_plot.add_line(angles, Cl["friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
-            self.Cd_plot.add_line(angles, Cd["friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
-            self.CL_Cd_plot.add_line(angles, CL_Cd["friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
-        if Cl["combined"] != []:
-            self.CL_plot.add_line(angles, Cl["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
-            self.Cd_plot.add_line(angles, Cd["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
-            self.CL_Cd_plot.add_line(angles, CL_Cd["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
+        if self.angles_tabs.get() == "Single":
+            if Cl["wave"] != []:
+                self.CL_plot.add_point(angles, Cl["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
+                self.Cd_plot.add_point(angles, Cd["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
+                self.CL_Cd_plot.add_point(angles, CL_Cd["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
+                self.C_MLE_plot.add_point(angles, C_Mle["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
+            if Cl["ackeret"] != []:
+                self.CL_plot.add_point(angles, Cl["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
+                self.Cd_plot.add_point(angles, Cd["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
+                self.CL_Cd_plot.add_point(angles, CL_Cd["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
+                self.C_MLE_plot.add_point(angles, C_Mle["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
+            if Cl["friction"] != []:
+                self.CL_plot.add_point(angles, Cl["friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+                self.Cd_plot.add_point(angles, Cd["friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+                self.CL_Cd_plot.add_point(angles, CL_Cd["friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+            if Cl["combined"] != []:
+                self.CL_plot.add_point(angles, Cl["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
+                self.Cd_plot.add_point(angles, Cd["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
+                self.CL_Cd_plot.add_point(angles, CL_Cd["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
+
+        else:
+            if Cl["wave"] != []:
+                self.CL_plot.add_line(angles, Cl["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
+                self.Cd_plot.add_line(angles, Cd["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
+                self.CL_Cd_plot.add_line(angles, CL_Cd["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
+                self.C_MLE_plot.add_line(angles, C_Mle["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
+            if Cl["ackeret"] != []:
+                self.CL_plot.add_line(angles, Cl["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
+                self.Cd_plot.add_line(angles, Cd["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
+                self.CL_Cd_plot.add_line(angles, CL_Cd["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
+                self.C_MLE_plot.add_line(angles, C_Mle["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
+            if Cl["friction"] != []:
+                self.CL_plot.add_line(angles, Cl["friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+                self.Cd_plot.add_line(angles, Cd["friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+                self.CL_Cd_plot.add_line(angles, CL_Cd["friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+            if Cl["combined"] != []:
+                self.CL_plot.add_line(angles, Cl["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
+                self.Cd_plot.add_line(angles, Cd["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
+                self.CL_Cd_plot.add_line(angles, CL_Cd["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
 
         self.command_interface.show_message(f"New data plotted for Airfoil '{self.Airfoils[solver_index].name}'", False)
 
