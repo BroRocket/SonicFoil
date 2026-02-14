@@ -35,6 +35,7 @@ class Solver{
 
     void ackeret_method(Airfoil &airfoil, double alpha, double M0, double P0, double T0, double rho0);
     void waveshock_method(Airfoil &airfoil, double alpha, double M0, double P0, double T0, double rho0);
+    void HessSmith_method(Airfoil &airfoil, double alpha, double M0, double P0, double T0, double rho0);
     void set_segment_state(Segment &airfoil_segment, double M, double P, double T, double rho);
 
     double iterare_recovery_factor(double r_guess, double s, Segment& seg);

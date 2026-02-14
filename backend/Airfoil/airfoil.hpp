@@ -27,18 +27,17 @@ private:
     }
 
 public:
-    Segment(Cordinate start, Cordinate end) : start(start), end(end), midpoint(Cordinate(start.x + (end.x-start.x)/2, start.y + (end.y-start.y)/2)), state(Conditions()), angle(get_angle(start, end)), x_distance(end.x - start.x), y_distance(end.y - start.y) {};
+    Segment(Cordinate start, Cordinate end) : start(start), end(end), midpoint(Cordinate((start.x + end.x)/2, (start.y + end.y)/2)), state(Conditions()), angle(get_angle(start, end)), norm_vec({-std::sin(angle), std::cos(angle)}), tang_vec({std::cos(angle), std::sin(angle)}), x_distance(end.x - start.x), y_distance(end.y - start.y), length(std::hypot(x_distance, y_distance)) {};
     Cordinate start;
     Cordinate end;
     Cordinate midpoint;
     Conditions state;
     double angle; 
+    std::pair<double, double> norm_vec;
+    std::pair<double, double> tang_vec;
     double x_distance;
     double y_distance;
-
-    double distance() {
-        return std::sqrt(std::pow((end.x - start.x), 2) + std::pow((end.y -start.y), 2));
-    };
+    double length;
 };
 
 class AerodynamicCoefficients{

@@ -64,8 +64,8 @@ class CTkAirfoilDataEntry(CTkScrollableFrame):
                     if x_val < self.points[i][0] and x_val > self.points[i-1][0]:
                         pos = i
                         break
-            x = x[:6]
-            y = y[:6]
+            x = x[:4]
+            y = y[:4]
         if pos is None:
             pos = len(self.point_entries)
              

@@ -2,6 +2,7 @@
 #include "Analysis/oblique_expansion.hpp"
 #include "Analysis/oblique_shock.hpp"
 #include "Solvers/aerodynamic_forces.hpp"
+#include "Analysis/hess_smith.hpp"
 
 #include <cmath>
 #include <vector>
@@ -11,7 +12,13 @@ Solver::Solver(Airfoil &airfoil_template, double gamma_)
 
 Result Solver::solve_single(std::string method, double AoA, double M0, double P0, double T0, double rho0){
 
-    if (M0 < 1.0) throw std::invalid_argument("Freestream Mach must be > 1.");
+    if (M0 < 1.0) {
+
+        Airfoil HessWessFoil = airfoil_template;   
+        
+        
+
+    } else { // throw std::invalid_argument("Freestream Mach must be > 1.");
   
     if (method[0] == 'w') {
         Airfoil wavefoil = airfoil_template;
@@ -56,8 +63,10 @@ Result Solver::solve_single(std::string method, double AoA, double M0, double P0
         }
 
 
-    } else {
-        throw std::invalid_argument("Invalid Method");
+        } else {
+            throw std::invalid_argument("Invalid Method");
+        };
+
     };
 };
 
@@ -217,6 +226,20 @@ void Solver::ackeret_method(Airfoil &airfoil, double alpha, double M0, double P0
     };
 }
 
+void Solver::HessSmith_method(Airfoil &airfoil, double alpha, double M0, double P0, double T0, double rho0) {
+
+    HessSmith panel_solver(airfoil, alpha, M0, T0);
+    airfoil = panel_solver.solve(P0, T0, rho0);
+
+    
+
+
+
+};
+
+
+// SUpersonic Friction
+
 double Solver::iterare_recovery_factor(double r_guess, double s, Segment& seg){
 
     double r = r_guess;
@@ -263,7 +286,7 @@ FrictionForces Solver::compute_surface_skin_friction(std::vector<Segment>& segs,
 
     for (size_t i = 0; i < segs.size(); ++i){
 
-        double panel_distance = segs[i].distance();
+        double panel_distance = segs[i].length;
         double distance = s + panel_distance;
         double r = iterare_recovery_factor(0.9, distance, segs[i]);
         double T_wall_adia = segs[i].state.T * (1 + r * ((gamma - 1)/2) * segs[i].state.M * segs[i].state.M);

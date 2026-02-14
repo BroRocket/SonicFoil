@@ -29,11 +29,12 @@ PYBIND11_MODULE(sonicfoil_backend, m) {
         pybind11::class_<Segment>(m, "Segment")
             .def_readonly("start", &Segment::start)
             .def_readonly("end", &Segment::end)
+            .def_readonly("midpoint", &Segment::midpoint)
             .def_readonly("state", &Segment::state)
             .def_readonly("angle", &Segment::angle)
             .def_readonly("x_distance", &Segment::x_distance)
             .def_readonly("y_distance", &Segment::y_distance)
-            .def("distance", &Segment::distance);
+            .def_readonly("length", &Segment::length);
 
         pybind11::class_<Airfoil>(m, "Airfoil")
             .def(pybind11::init<const std::string &>())
