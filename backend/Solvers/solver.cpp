@@ -14,9 +14,22 @@ Result Solver::solve_single(std::string method, double AoA, double M0, double P0
 
     if (M0 < 1.0) {
 
-        Airfoil HessWessFoil = airfoil_template;   
+        Airfoil HessSmithfoil = airfoil_template;   
+        double kutta_Cl = HessSmith_method(HessSmithfoil, AoA, M0, P0, T0, rho0);
+        AerodynamicForces(HessSmithfoil, AoA, P0, M0);
         
+        if (method[1] == 'h') {
+            if (method[1] == 'd') {
+            // do skin friction calc for subsonic
+            };
+        } else if (method[1] == 'k') {
+            if (method[1] == 'd') {
+            // do skin friction calc for subsonic
+            };
+        }
         
+
+
 
     } else { // throw std::invalid_argument("Freestream Mach must be > 1.");
   
@@ -30,7 +43,7 @@ Result Solver::solve_single(std::string method, double AoA, double M0, double P0
         // Then do friction calculations
         if (method[1] == 'd') {
             Airfoil dragfoil = airfoil_template;
-            skin_friction(wavefoil, dragfoil, AoA);
+            skin_friction_supersonic(wavefoil, dragfoil, AoA);
             return Result(wavefoil, std::nullopt, dragfoil);
         } else {
             return Result(wavefoil, std::nullopt, std::nullopt);
@@ -56,7 +69,7 @@ Result Solver::solve_single(std::string method, double AoA, double M0, double P0
 
         if (method[1] == 'd') {
             Airfoil dragfoil = airfoil_template;
-            skin_friction(wavefoil, dragfoil, AoA);
+            skin_friction_supersonic(wavefoil, dragfoil, AoA);
             return Result(wavefoil, ackeretfoil, dragfoil);
         } else {
             return Result(wavefoil, ackeretfoil, std::nullopt);
@@ -226,19 +239,18 @@ void Solver::ackeret_method(Airfoil &airfoil, double alpha, double M0, double P0
     };
 }
 
-void Solver::HessSmith_method(Airfoil &airfoil, double alpha, double M0, double P0, double T0, double rho0) {
+double Solver::HessSmith_method(Airfoil &airfoil, double alpha, double M0, double P0, double T0, double rho0) {
 
     HessSmith panel_solver(airfoil, alpha, M0, T0);
     airfoil = panel_solver.solve(P0, T0, rho0);
-
-    
-
-
-
+    return panel_solver.kutta_Cl;
+    // Need to add subsonic drag and then also add Kutt lift versus aerodynamic forces computed lift check difference
+    // Need to find best way to return the result
 };
 
 
-// SUpersonic Friction
+
+// Supersonic Friction
 
 double Solver::iterare_recovery_factor(double r_guess, double s, Segment& seg){
 
@@ -275,7 +287,7 @@ double Solver::iterare_recovery_factor(double r_guess, double s, Segment& seg){
     
 };
 
-FrictionForces Solver::compute_surface_skin_friction(std::vector<Segment>& segs, double alpha) {
+FrictionForces Solver::compute_surface_skin_friction_supersonic(std::vector<Segment>& segs, double alpha) {
 
     double panel_drag_coefficient;
     double drag_coefficient = 0;
@@ -386,20 +398,97 @@ FrictionForces Solver::compute_surface_skin_friction(std::vector<Segment>& segs,
 
 }
 
-void Solver::skin_friction(Airfoil &airfoil, Airfoil &result_airfoil, double alpha) {
+void Solver::skin_friction_supersonic(Airfoil &airfoil, Airfoil &result_airfoil, double alpha) {
     // needs to be fed airfoil from shock/expansion solver
     // Uses blassius solution, with compresisble adjustmeents using an adiabatic wall temperature to compute a refernece temperature
     // for the boundary layer and then computes the adjusted viscoty using sutherlands formula. 
     // Considers both laminar and tubrulent and trnaistional boundary layer states. 
     // Computes the skin friction across both top and bottom of airfoil
-    FrictionForces top_friction = compute_surface_skin_friction(airfoil.top_segments, alpha);
-    FrictionForces bottom_friction = compute_surface_skin_friction(airfoil.bottom_segments, alpha);
+    FrictionForces top_friction = compute_surface_skin_friction_supersonic(airfoil.top_segments, alpha);
+    FrictionForces bottom_friction = compute_surface_skin_friction_supersonic(airfoil.bottom_segments, alpha);
 
     result_airfoil.Forces.CL = top_friction.CL + bottom_friction.CL;
     result_airfoil.Forces.Cd = top_friction.CD + bottom_friction.CD;
     result_airfoil.Forces.CL_Cd = result_airfoil.Forces.CL/result_airfoil.Forces.Cd;
  
 }
+
+// Subsonic Skin fricton drag
+// simple method using flat plate approximation
+
+FrictionForces Solver::compute_surface_skin_friction_subsonic(std::vector<Segment>& segs, double alpha, double rho_inf, double U_inf, double mu_inf)
+{
+    double drag_coefficient = 0.0;
+    double lift_coefficient = 0.0;
+    double s = 0.0;
+    bool transition = true;
+
+    for (size_t i = 0; i < segs.size(); ++i)
+    {
+        double panel_length = segs[i].length;
+        double U_e = segs[i].state.Ue;   // tangential velocity from panel method
+        double distance = s + panel_length;
+
+        double Re_s = (rho_inf * U_e * distance) / mu_inf;
+
+        double Cf;
+        double panel_drag;
+
+        if (Re_s < 5e5)
+        {
+            // Laminar
+            Cf = 0.664 / std::sqrt(Re_s);
+            panel_drag = Cf * panel_length;
+        }
+        else
+        {
+            if (transition)
+            {
+                double s_crit = (5e5 * mu_inf) / (rho_inf * U_e);
+
+                if (s_crit <= s)
+                {
+                    // Fully turbulent
+                    Cf = 0.0592 / std::pow(Re_s, 0.2);
+                    panel_drag = Cf * panel_length;
+                }
+                else
+                {
+                    // Split laminar + turbulent region
+
+                    double Re_lam = rho_inf * U_e * s_crit / mu_inf;
+                    double Cf_lam = 0.664 / std::sqrt(Re_lam);
+
+                    double Re_turb = rho_inf * U_e * distance / mu_inf;
+                    double Cf_turb = 0.0592 / std::pow(Re_turb, 0.2);
+
+                    panel_drag =
+                        Cf_lam * (s_crit - s) +
+                        Cf_turb * (distance - s_crit);
+                }
+
+                transition = false;
+            }
+            else
+            {
+                Cf = 0.0592 / std::pow(Re_s, 0.2);
+                panel_drag = Cf * panel_length;
+            }
+        }
+
+        // Transform to body frame
+        double Fx = panel_drag * cos(segs[i].angle);
+        double Fy = panel_drag * sin(segs[i].angle);
+
+        drag_coefficient += Fx * cos(alpha) + Fy * sin(alpha);
+        lift_coefficient += Fy * cos(alpha) - Fx * sin(alpha);
+
+        s += panel_length;
+    }
+
+    return {drag_coefficient, lift_coefficient};
+}
+
 
 
 void Solver::set_segment_state(Segment &airfoil_segment, double M, double P, double T, double rho) {

@@ -16,14 +16,17 @@ struct FrictionForces {
 class Result {
     public:
     Result() 
-        : wave_solution(std::nullopt), ackeret_solution(std::nullopt), skin_friction_solution(std::nullopt) {};
+        : wave_solution(std::nullopt), ackeret_solution(std::nullopt), skin_friction_solution_supersonic(std::nullopt) {};
 
     Result(std::optional<Airfoil> wave, std::optional<Airfoil> ackeret, std::optional<Airfoil> skin_friction) : 
-    wave_solution(wave), ackeret_solution(ackeret), skin_friction_solution(skin_friction) {};
+    wave_solution(wave), ackeret_solution(ackeret), skin_friction_solution_supersonic(skin_friction) {};
 
     std::optional<Airfoil> wave_solution; 
     std::optional<Airfoil> ackeret_solution; 
-    std::optional<Airfoil> skin_friction_solution;
+    std::optional<Airfoil> skin_friction_solution_supersonic;
+    std::optional<Airfoil> panel_solution;
+    std::optional<Airfoil> skin_friction_solution_subsonic_simple;
+    std::optional<Airfoil> skin_friction_solution_subsonic_complex;
     
 };
 
@@ -35,12 +38,14 @@ class Solver{
 
     void ackeret_method(Airfoil &airfoil, double alpha, double M0, double P0, double T0, double rho0);
     void waveshock_method(Airfoil &airfoil, double alpha, double M0, double P0, double T0, double rho0);
-    void HessSmith_method(Airfoil &airfoil, double alpha, double M0, double P0, double T0, double rho0);
+    double HessSmith_method(Airfoil &airfoil, double alpha, double M0, double P0, double T0, double rho0);
     void set_segment_state(Segment &airfoil_segment, double M, double P, double T, double rho);
 
     double iterare_recovery_factor(double r_guess, double s, Segment& seg);
-    void skin_friction(Airfoil &airfoil, Airfoil &result_airfoil, double alpha);
-    FrictionForces compute_surface_skin_friction(std::vector<Segment>& segs, double alpha);
+    void skin_friction_supersonic(Airfoil &airfoil, Airfoil &result_airfoil, double alpha);
+    FrictionForces compute_surface_skin_friction_supersonic(std::vector<Segment>& segs, double alpha);
+
+    FrictionForces compute_surface_skin_friction_subsonic(std::vector<Segment>& segs, double alpha, double rho_inf, double U_inf, double mu_inf);
 
     public:
     bool success;

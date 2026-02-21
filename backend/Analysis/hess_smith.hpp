@@ -27,6 +27,6 @@ class HessSmith {
 
     HessSmith(Airfoil &airfoil, double alpha, double M0, double T0);
 
-    Airfoil solve(double P0, double T0, double rho0);
+    Airfoil solve(double P0, double T0, double rho0, double gamma = 1.4, double R = 287);
 
 };

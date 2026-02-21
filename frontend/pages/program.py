@@ -398,7 +398,7 @@ class ProgramPage(CTkFrame):
         for result in solver.Results:
             wave = result.wave_solution
             ackeret = result.ackeret_solution
-            friction = result.skin_friction_solution
+            friction = result.skin_friction_solution_supersonic
             if wave is not None:
                 Cl["wave"].append(wave.Forces.CL)
                 Cd["wave"].append(wave.Forces.Cd)

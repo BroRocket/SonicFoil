@@ -124,7 +124,7 @@ HessSmith::HessSmith(Airfoil &airfoil, double alpha, double M0, double T0) : air
 
 };
 
-Airfoil HessSmith::solve(double P0, double T0, double rho0) {
+Airfoil HessSmith::solve(double P0, double T0, double rho0, double gamma, double R) {
 
     std::vector<double> x_i = solve_pivot(A_ij, b_i);
 
@@ -173,12 +173,14 @@ Airfoil HessSmith::solve(double P0, double T0, double rho0) {
     size_t i = 0;
     for (Segment &seg: airfoil_template.bottom_segments) {
         double Cp_i = 1 - ((v_ti[i]/V)*(v_ti[i]/V));
-        double M_i = M*(v_ti[i]/V);
+        double T_i = T + ((gamma - 1)*((V*V - v_ti[i]*v_ti[i])/(2*gamma*R)));
+        double M_i = v_ti[i]/(std::sqrt(gamma*R*T_i));
+        double rho_i = rho0 * std::pow(((1 + ((gamma - 1)/2)*M*M)/(1 + ((gamma - 1)/2)*M_i*M_i)), (1/gamma));
         if (M > 0.3) {
             Cp_i = Cp_i / (std::sqrt(1 - M*M));
         };
         double p_i = P0 + 0.5*rho0*V*V*Cp_i;
-        set_state(seg, M_i, p_i, rho0, T);
+        set_state(seg, M_i, p_i, rho_i, T_i);
         ++i;
     };
     for (Segment &seg: airfoil_template.top_segments) {
