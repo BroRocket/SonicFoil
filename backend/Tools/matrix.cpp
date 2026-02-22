@@ -7,6 +7,8 @@
 #include <tuple>
 #include <vector>
 #include <cmath>
+#include <iostream>
+#include <iomanip>
 
 size_t Matrix::index(size_t x, size_t y) const{
     return (y * n_col) + x;
@@ -101,6 +103,22 @@ Matrix Matrix::multiply(const Matrix& other) const{
 
     return result;
 };
+
+void Matrix::print(std::ostream& os) const {
+    for (size_t y = 0; y < m_row; ++y) {
+        os << "[ ";
+
+        for (size_t x = 0; x < n_col; ++x) {
+            os << get(x, y);
+
+            if (x + 1 < n_col) {
+                os << ", ";
+            }
+        }
+
+        os << " ]\n";
+    }
+}
 
 Matrix Matrix::transpose() const{
     Matrix result(m_row, n_col, false);
@@ -392,3 +410,33 @@ std::vector<double> solve_pivot(const Matrix& A, const std::vector<double>& b){
     std::vector<double> x = backwardsub_pivot(U, z);
     return x;
 };
+
+// int main()
+// {
+//     /* test code code */
+//     Matrix A = Matrix(3 , 3);
+//     A.set(0, 0, 2);
+//     A.set(1, 0, 1);
+//     A.set(2, 0, 1);
+//     A.set(0, 1, 4);
+//     A.set(1, 1, 3);
+//     A.set(2, 1, 3);
+//     A.set(0, 2, 8);
+//     A.set(1, 2, 7);
+//     A.set(2, 2, 10);
+//     A.print();
+//     std::vector<double> b;
+//     b.push_back(1);b.push_back(1);b.push_back(4);
+//     std::vector<double> x = solve_pivot(A, b);
+
+//     std::cout << "\n[";
+//     for (size_t i=0; i < x.size(); ++i) {
+//         std::cout << x[i];
+//         if (i != x.size() - 1) {
+//             std::cout << ", ";
+//         };
+//     };
+//     std::cout << "]\n";
+
+//     return 0;
+// }

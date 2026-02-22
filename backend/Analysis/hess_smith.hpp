@@ -5,6 +5,8 @@
 #include "Tools/matrix.hpp"
 #include "Airfoil/airfoil.hpp"
 
+constexpr double PI = 3.14159265358979323846;
+
 class HessSmith {
     private:
     

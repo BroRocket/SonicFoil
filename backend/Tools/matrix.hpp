@@ -4,6 +4,7 @@
 #include <utility>
 #include <tuple>
 #include <vector>
+#include <iostream>
 
 class Matrix {
     private:
@@ -27,6 +28,8 @@ class Matrix {
     void set_column(size_t x, const std::vector<double>& values);
 
     void resize(size_t n_cols, size_t m_rows);
+
+    void print(std::ostream& os = std::cout) const;
 
     Matrix multiply(const Matrix& other) const;
 

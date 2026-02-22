@@ -12,14 +12,19 @@ HessSmith::HessSmith(Airfoil &airfoil, double alpha, double M0, double T0, doubl
 
     airfoil_segments = airfoil.bottom_segments;
     std::reverse(airfoil_segments.begin(), airfoil_segments.end());
-    for (Segment &seg : airfoil.top_segments) {
-        airfoil_segments.push_back(seg);
-    };
-    // issue is end of bottom panels is what I need is the start and end switched which is what this does
     for (size_t i = 0; i < airfoil.bottom_segments.size(); ++i) {
         std::swap(airfoil_segments[i].start, airfoil_segments[i].end);
     }
-
+    for (Segment &seg : airfoil.top_segments) {
+        airfoil_segments.push_back(seg);
+    };
+    int i=0;
+    for (Segment &seg : airfoil_segments) {
+        std::cout << "Panel" << i << " (" << seg.start.x << " , " << seg.start.y << ") -> (" << seg.end.x << "," << seg.end.y << ")\n";
+        ++i;
+    }
+    // issue is end of bottom panels is what I need is the start and end switched which is what this does
+    
     double r_ij;
     double r_ij1;
     double beta_ij;
@@ -45,7 +50,7 @@ HessSmith::HessSmith(Airfoil &airfoil, double alpha, double M0, double T0, doubl
             r_ij = distance(airfoil_segments[j].start, airfoil_segments[i].midpoint);
             r_ij1 = distance(airfoil_segments[j].end, airfoil_segments[i].midpoint);
             if (i == j) {
-                beta_ij = M_PI;
+                beta_ij = PI;
             } else {
                 arg = (r_ij*r_ij + r_ij1*r_ij1 - std::pow(airfoil_segments[j].length, 2)) / (2*r_ij*r_ij1);
                 arg = std::clamp(arg, -1.0, 1.0);
@@ -62,7 +67,7 @@ HessSmith::HessSmith(Airfoil &airfoil, double alpha, double M0, double T0, doubl
             r_ij = distance(airfoil_segments[j].start, airfoil_segments[i].midpoint);
             r_ij1 = distance(airfoil_segments[j].end, airfoil_segments[i].midpoint);
             if (i == j) {
-                beta_ij = M_PI;
+                beta_ij = PI;
             } else {
                 arg = (r_ij*r_ij + r_ij1*r_ij1 - std::pow(airfoil_segments[j].length, 2)) / (2*r_ij*r_ij1);
                 arg = std::clamp(arg, -1.0, 1.0);
@@ -72,10 +77,10 @@ HessSmith::HessSmith(Airfoil &airfoil, double alpha, double M0, double T0, doubl
         };
 
         A_ij.set(airfoil_segments.size(), i, val);
-        b_i.push_back(2 * M_PI * V * std::sin(airfoil_segments[i].angle - AoA));
+        b_i.push_back(2 * PI * V * std::sin(airfoil_segments[i].angle - AoA));
 
     };
-    b_i.push_back(-2 * M_PI * V * (std::cos(airfoil_segments[0].angle - AoA) + std::cos(airfoil_segments[airfoil_segments.size() - 1].angle - AoA)));
+    b_i.push_back(-2 * PI * V * (std::cos(airfoil_segments[0].angle - AoA) + std::cos(airfoil_segments[airfoil_segments.size() - 1].angle - AoA)));
 
     // Kutta Row (i = N) // represents N+1 row
     for (size_t j = 0; j < airfoil_segments.size(); ++j) {
@@ -83,7 +88,7 @@ HessSmith::HessSmith(Airfoil &airfoil, double alpha, double M0, double T0, doubl
         r_1j = distance(airfoil_segments[j].start, airfoil_segments[0].midpoint);
         r_1j1 = distance(airfoil_segments[j].end, airfoil_segments[0].midpoint);
         if (0 == j) {
-            beta_1j = M_PI;
+            beta_1j = PI;
         } else {
             arg = (r_1j*r_1j + r_1j1*r_1j1 - std::pow(airfoil_segments[j].length, 2)) / (2*r_1j*r_1j1);
             arg = std::clamp(arg, -1.0, 1.0);
@@ -92,7 +97,7 @@ HessSmith::HessSmith(Airfoil &airfoil, double alpha, double M0, double T0, doubl
         r_nj = distance(airfoil_segments[j].start, airfoil_segments[airfoil_segments.size()-1].midpoint);
         r_nj1 = distance(airfoil_segments[j].end, airfoil_segments[airfoil_segments.size()-1].midpoint);
         if (airfoil_segments.size()-1 == j) {
-            beta_nj = M_PI;
+            beta_nj = PI;
         } else {
             arg = (r_nj*r_nj + r_nj1*r_nj1 - std::pow(airfoil_segments[j].length, 2)) / (2*r_nj*r_nj1);
             arg = std::clamp(arg, -1.0, 1.0);
@@ -126,7 +131,22 @@ HessSmith::HessSmith(Airfoil &airfoil, double alpha, double M0, double T0, doubl
 
 Airfoil HessSmith::solve(double P0, double T0, double rho0) {
 
+
+    // A_ij.print();
+    // std::cout << "[ ";
+    // for (size_t i = 0; i < b_i.size(); ++i) {
+    //     std::cout << b_i[i];
+    //     if (i + 1 < b_i.size()) std::cout << ", ";
+    // }
+    // std::cout << " ]\n";
+
     std::vector<double> x_i = solve_pivot(A_ij, b_i);
+    std::cout << "[ ";
+    for (size_t i = 0; i < x_i.size(); ++i) {
+        std::cout << x_i[i];
+        if (i + 1 < x_i.size()) std::cout << ", ";
+    }
+    std::cout << " ]\n";
 
     v_ti.reserve(airfoil_segments.size());
     double circulation_val;
@@ -144,7 +164,7 @@ Airfoil HessSmith::solve(double P0, double T0, double rho0) {
             r_ij = distance(airfoil_segments[j].start, airfoil_segments[i].midpoint);
             r_ij1 = distance(airfoil_segments[j].end, airfoil_segments[i].midpoint);
             if (i == j) {
-                beta_ij = M_PI;
+                beta_ij = PI;
             } else {
                 arg = (r_ij*r_ij + r_ij1*r_ij1 - std::pow(airfoil_segments[j].length, 2)) / (2*r_ij*r_ij1);
                 arg = std::clamp(arg, -1.0, 1.0);
@@ -156,7 +176,7 @@ Airfoil HessSmith::solve(double P0, double T0, double rho0) {
             
         };
 
-        v_ti.push_back(V*std::cos(airfoil_segments[i].angle - AoA) + (source_val/(2*M_PI)) + ((x_i[airfoil_segments.size()]*circulation_val)/(2*M_PI)));
+        v_ti.push_back(V*std::cos(airfoil_segments[i].angle - AoA) + (source_val/(2*PI)) + ((x_i[airfoil_segments.size()]*circulation_val)/(2*PI)));
 
     };
 
@@ -165,9 +185,10 @@ Airfoil HessSmith::solve(double P0, double T0, double rho0) {
     for (Segment &seg : airfoil_segments) {
         total_length += seg.length;
     }
+
     double Gamma = x_i[airfoil_segments.size()] * total_length;
-    
-    kutta_Cl = (2 * Gamma) / V;
+    std::cout << Gamma;
+    kutta_Cl = (2 * Gamma) / (V);
 
     // update airfoil;
     size_t i = 0;

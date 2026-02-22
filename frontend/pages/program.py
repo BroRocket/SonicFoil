@@ -91,29 +91,15 @@ class ProgramPage(CTkFrame):
         self.input_lbl = CTkLabel(self.inputs_frm, text="Solver Inputs", font=("Arial", 16), anchor="center")
         self.input_lbl.grid(row=0, column=0, columnspan=4, padx=10, pady=10, sticky="nsew")
 
-        self.methods_frm = CTkFrame(self.inputs_frm)
-        self.methods_frm.grid_columnconfigure((0, 1, 2, 3), weight=1)
-        self.methods_frm.grid_rowconfigure(0, weight=1)
-        self.method_lbl = CTkLabel(self.methods_frm, text="Methods:", font=("Arial", 14), anchor="e")
-        self.wave_var = StringVar(value="off")
-        self.ackeret_var = StringVar(value="off")
-        self.friction_var = StringVar(value="off")
-        self.wave_method_radbtn = CTkCheckBox(self.methods_frm, text="Shock/Expansion", command=None, variable= self.wave_var, onvalue="on", offvalue="off")
-        self.ackeret_method_radbtn = CTkCheckBox(self.methods_frm, text="Ackeret", command=None, variable= self.ackeret_var, onvalue="on", offvalue="off")
-        self.friction_switch = CTkSwitch(self.methods_frm, text="Skin Friction", command=None, variable= self.friction_var, onvalue="on", offvalue="off")
-
-        self.method_lbl.grid(row=0, column=0, padx=(10, 5), pady=5, sticky="nsew") # should maybe put these in there own frame
-        self.wave_method_radbtn.grid(row=0, column=1, padx=(5, 5), pady=5, sticky="nsew")
-        self.ackeret_method_radbtn.grid(row=0, column=2, padx=(0, 5), pady=5, sticky="nsew")
-        self.friction_switch.grid(row=0, column=3, padx=(5, 10), pady=5, sticky="nsew")
-        self.methods_frm.grid(row=1, column=0, columnspan=4, padx=10, pady=10, sticky="nsew")
-
         self.flow_conditions_input_frm = CTkFrame(self.inputs_frm)
         self.flow_conditions_input_frm.grid_columnconfigure((0, 1, 2, 3) , weight=1)
         self.flow_conditions_input_frm.grid_rowconfigure((0, 1, 2), weight=1)
         self.freestream_lbl = CTkLabel(self.flow_conditions_input_frm, text="Freestream Flow Conditions", font=("Arial", 14), anchor="center")
         self.mach_lbl = CTkLabel(self.flow_conditions_input_frm, text="Mach Number:", font=("Arial", 12), anchor="e")
-        self.mach_entry = CTkEntry(self.flow_conditions_input_frm, placeholder_text="1.0")
+        self.mach_entry_var = StringVar(value = "1.5")
+        self.mach_entry_var.trace_add('write', self._render_methods)
+        self.method_state = "sub"
+        self.mach_entry = CTkEntry(self.flow_conditions_input_frm, textvariable=self.mach_entry_var)
         self.pressure_lbl = CTkLabel(self.flow_conditions_input_frm, text="Pressure (Pa):", font=("Arial", 12), anchor="e")
         self.pressure_entry = CTkEntry(self.flow_conditions_input_frm, placeholder_text="101325")
         self.density_lbl = CTkLabel(self.flow_conditions_input_frm, text="Density (kg/m^3):", font=("Arial", 12), anchor="e")
@@ -130,7 +116,11 @@ class ProgramPage(CTkFrame):
         self.density_entry.grid(row=2, column=1, padx=(0, 5), pady=(0, 10), sticky="nsew")
         self.temperature_lbl.grid(row=2, column=2, padx=(5, 5), pady=(0, 10), sticky="nsew")
         self.temperature_entry.grid(row=2, column=3, padx=(0 ,10), pady=(0, 10), sticky="nsew")
-        self.flow_conditions_input_frm.grid(row=2, column=0, columnspan=4, padx=5, pady=5, sticky="nsew")
+        self.flow_conditions_input_frm.grid(row=1, column=0, columnspan=4, padx=5, pady=5, sticky="nsew")
+
+        # Make function that renders this based on mach number
+        # call render fucntion
+        self._render_methods()
 
         self.angles_frm = CTkFrame(self.inputs_frm)
         self.angles_frm.grid_rowconfigure((0, 1), weight=1)  # row with TabView
@@ -153,7 +143,7 @@ class ProgramPage(CTkFrame):
         self.angle_range_left_entry = CTkEntry(self.angle_range_tab, placeholder_text="0")
         self.angle_range_mid_lbl = CTkLabel(self.angle_range_tab, text="to", font=("Arial", 12), anchor="center")
         self.angle_range_right_entry = CTkEntry(self.angle_range_tab, placeholder_text="5")
-        self.angle_range_step_size_lbl = CTkLabel(self.angle_range_tab, text="Step Size:", font=("Arial", 12), anchor="e")
+        self.angle_range_step_size_lbl = CTkLabel(self.angle_range_tab, text="Step Size (degrees):", font=("Arial", 12), anchor="e")
         self.angle_range_step_size_entry = CTkEntry(self.angle_range_tab, placeholder_text="1")
         self.angle_range_lbl.grid(row=0, column=0, padx=(10, 5), pady=(10, 5), sticky="ew")
         self.angle_range_left_entry.grid(row=0, column=1, padx=0, pady=(10, 5), sticky="ew")
@@ -212,6 +202,72 @@ class ProgramPage(CTkFrame):
         self.command_interface.pack(padx=10, pady=10, fill="both")
 
         self.text_output_frm.grid(row=5, rowspan=2, column=2, columnspan=3, padx=5, pady=5, sticky="nsew")
+
+    def _render_methods(self, *args) -> None:  # need to  update varaibles elsewhere  
+        try:
+            mach = float(self.mach_entry.get())
+        except:
+            return
+
+        if mach >= 1 and self.method_state != "sup":
+            self.methods_frm = CTkFrame(self.inputs_frm)
+            self.methods_frm.grid_columnconfigure((0, 1, 2), weight=1)
+            self.methods_frm.grid_rowconfigure((0, 1), weight=1)
+            self.method_lbl = CTkLabel(self.methods_frm, text="Supersonic Methods:", font=("Arial", 14), anchor="e")
+            self.wave_var = StringVar(value="off")
+            self.ackeret_var = StringVar(value="off")
+            self.supersonic_friction_var = StringVar(value="off") # add a toggle for friction being selectable
+            self.wave_method_radbtn = CTkCheckBox(self.methods_frm, text="Shock/Expansion", variable= self.wave_var, onvalue="on", offvalue="off", command=self._toggle_friciton_button)
+            self.ackeret_method_radbtn = CTkCheckBox(self.methods_frm, text="Ackeret", command=None, variable= self.ackeret_var, onvalue="on", offvalue="off")
+            self.supersonic_friction_switch = CTkSwitch(self.methods_frm, text="Skin Friction", command=None, variable= self.supersonic_friction_var, onvalue="on", offvalue="off", state="disabled")
+
+            self.method_lbl.grid(row=0, column=0, padx=(10, 5), pady=5, sticky="nsew") 
+            self.wave_method_radbtn.grid(row=0, column=1, padx=(5, 5), pady=5, sticky="nsew")
+            self.ackeret_method_radbtn.grid(row=0, column=2, padx=(0, 5), pady=5, sticky="nsew")
+            self.supersonic_friction_switch.grid(row=1, column=1, padx=(15, 10), pady=5, sticky="nsew")
+            self.methods_frm.grid(row=2, column=0, columnspan=4, padx=10, pady=10, sticky="nsew")
+
+            self.method_state = "sup"
+
+        elif mach < 1 and self.method_state != "sub":
+            self.methods_frm = CTkFrame(self.inputs_frm)
+            self.methods_frm.grid_columnconfigure((0, 1, 2, 3), weight=1)
+            self.methods_frm.grid_rowconfigure(0, weight=1)
+            self.method_lbl = CTkLabel(self.methods_frm, text="Subsonic Methods:", font=("Arial", 14), anchor="e")
+            self.panel_var = StringVar(value="off")
+            self.kutta_var = StringVar(value="off")
+            self.subsonic_friction_var = StringVar(value="off")
+            self.panel_method_radbtn = CTkCheckBox(self.methods_frm, text="Panel Forces", variable= self.panel_var, onvalue="on", offvalue="off", command=self._toggle_friciton_button)
+            self.kutta_method_radbtn = CTkCheckBox(self.methods_frm, text="Panel Kutta", variable= self.kutta_var, onvalue="on", offvalue="off", command=self._toggle_friciton_button)
+            self.subsonic_friction_switch = CTkSwitch(self.methods_frm, text="Skin Friction", command=None, variable= self.subsonic_friction_var, onvalue="on", offvalue="off", state="disabled")
+
+            self.method_lbl.grid(row=0, column=0, padx=(10, 5), pady=5, sticky="nsew") 
+            self.panel_method_radbtn.grid(row=0, column=1, padx=(5, 5), pady=5, sticky="nsew")
+            self.kutta_method_radbtn.grid(row=0, column=2, padx=(0, 5), pady=5, sticky="nsew")
+            self.subsonic_friction_switch.grid(row=0, column=3, padx=(15, 10), pady=5, sticky="nsew")
+            self.methods_frm.grid(row=2, column=0, columnspan=4, padx=10, pady=10, sticky="nsew")
+
+            self.method_state = "sub"
+
+    def _toggle_friciton_button(self):
+        if self.method_state == "sup": # update state if on and disblae if off just diasbale
+            wave_state = self.wave_var.get()
+            if wave_state == "on":
+                self.supersonic_friction_switch.configure(state="enabled")
+            else:
+                self.supersonic_friction_switch.configure(state="disabled")
+                self.supersonic_friction_var.set("off") # check if changes
+
+        elif self.method_state == "sub":
+            panel_state = self.panel_var.get()
+            kutta_state = self.kutta_var.get()
+            if panel_state == "on": # should also tunr on if both enabled so this fine
+                self.subsonic_friction_switch.configure(state="enabled")
+            elif kutta_state == "on":
+                self.subsonic_friction_switch.configure(state="enabled")
+            else: # disable
+                self.subsonic_friction_switch.configure(state="disabled")
+                self.subsonic_friction_var.set("off")
 
 
     def _get_available_projects(self) -> list:
@@ -305,32 +361,52 @@ class ProgramPage(CTkFrame):
         self.C_MLE_plot.clear()
         self.command_interface.show_message("Result plots cleared", False)
 
+    def _get_method(self) -> str:
+        method = ""
+        if self.method_state == "sup":
+            if self.wave_var.get() == "on" and self.ackeret_var.get() == "on":
+                method += "b"
+            elif self.wave_var.get() == "on":
+                method += "w"
+            elif self.ackeret_var.get() == "on":
+                method += "a"
+            else:
+                ui_messages.gui_error("Please select a solver method to solve the pressure distribution, cannot run without a selection.")
+                return ""
+            if self.supersonic_friction_var.get() == "on":
+                if method == "a":
+                    ui_messages.gui_popup("Cannot solve skin friciton using ackeret method results. No friction result will be produced.")
+                else:
+                    method += "d"
+                
+        elif self.method_state == "sub":
+            if self.panel_var.get() == "on" and self.kutta_var.get() == "on":
+                method += "b"
+            elif self.panel_var.get() == "on":
+                method += "h"
+            elif self.kutta_var.get() == "on":
+                method += "k"
+            else:
+                ui_messages.gui_error("Please select a solver method to solve the pressure distribution, cannot run without a selection.")
+                return ""
+            if self.subsonic_friction_var.get() == "on":
+                method += "d"
+
+        return method
+
     def _run(self) -> None:
         self.command_interface.show_message("Starting Task...", False)
-        method = ""
-        if self.wave_var.get() == "on" and self.ackeret_var.get() == "on":
-            method += "b"
-        elif self.wave_var.get() == "on":
-            method += "w"
-        elif self.ackeret_var.get() == "on":
-            method += "a"
-        else:
-            ui_messages.gui_error("Please select a solver method to solve the pressure distribution, cannot run without a selection.")
+        method = self._get_method()
+        if method == "": 
             return
-
-        if self.friction_var.get() == "on":
-            if method == "a":
-                ui_messages.gui_popup("Cannot solve skin friciton using ackeret method results. No friction result will be produced.")
-            else:
-                method += "d"
 
         mach = float(self.mach_entry.get()) if self.mach_entry.get() != '' else 1.0
         pressure = float(self.pressure_entry.get()) if self.pressure_entry.get() != '' else 101325
         density = float(self.density_entry.get()) if self.density_entry.get() != '' else 1.225
         temperature = float(self.temperature_entry.get()) if self.temperature_entry.get() != '' else 273.15
 
-        if mach <= 1 or mach > 5:
-            ui_messages.gui_error("Mach number is out of allowbale regime. Mach Number must be within 1 < M < 10")
+        if mach > 5:
+            ui_messages.gui_error("Mach number is out of allowbale regime. Mach Number must be within M > 5")
             return
         elif pressure <= 0:
             ui_messages.gui_error("Pressure cannot be below zero")
@@ -389,16 +465,19 @@ class ProgramPage(CTkFrame):
         self.Results = []
         linestyle_options = ["solid", "dotted", "dashed", "dashdot"]
 
-        Cl = {"wave": [], "ackeret": [], "friction": [], "combined": []}
-        Cd = {"wave": [], "ackeret": [], "friction": [], "combined": []}
-        CL_Cd = {"wave": [], "ackeret": [], "friction": [], "combined": []}
-        C_Mle = {"wave": [], "ackeret": []} # curently no Cmle for friction
-        #currently no xcp and ycp
+        Cl = {"wave": [], "ackeret": [], "supersonic_friction": [], "supersonic_combined": [], "panel": [], "kutta": [], "subsonic_friction": [], "subsonic_combined(p)": [], "subsonic_combined(k)": []}
+        Cd = {"wave": [], "ackeret": [], "supersonic_friction": [], "supersonic_combined": [],  "panel": [], "subsonic_friction": [], "subsonic_combined(p)": [], "subsonic_combined(k)": []}
+        CL_Cd = {"wave": [], "ackeret": [], "supersonic_friction": [], "supersonic_combined": [], "panel": [], "subsonic_friction": [], "subsonic_combined(p)": [], "subsonic_combined(k)": []}
+        C_Mle = {"wave": [], "ackeret": [], "panel": []} # curently no Cmle for friction
+        #currently no xcp and ycp plottingg
 
-        for result in solver.Results:
+        for result in solver.Results: 
             wave = result.wave_solution
             ackeret = result.ackeret_solution
-            friction = result.skin_friction_solution_supersonic
+            supersonic_friction = result.skin_friction_solution_supersonic 
+            panel = result.panel_forces_solution
+            kutta = result.panel_kutta_solution
+            subsonic_friction = result.skin_friction_solution_subsonic
             if wave is not None:
                 Cl["wave"].append(wave.Forces.CL)
                 Cd["wave"].append(wave.Forces.Cd)
@@ -409,16 +488,38 @@ class ProgramPage(CTkFrame):
                 Cd["ackeret"].append(ackeret.Forces.Cd)
                 CL_Cd["ackeret"].append(ackeret.Forces.CL_Cd)
                 C_Mle["ackeret"].append(ackeret.Forces.C_MLE)
-            if friction is not None:
-                Cl["friction"].append(friction.Forces.CL)
-                Cd["friction"].append(friction.Forces.Cd)
-                CL_Cd["friction"].append(friction.Forces.CL_Cd)
+            if supersonic_friction is not None:
+                Cl["supersonic_friction"].append(supersonic_friction.Forces.CL)
+                Cd["supersonic_friction"].append(supersonic_friction.Forces.Cd)
+                CL_Cd["supersonic_friction"].append(supersonic_friction.Forces.CL_Cd)
+            if panel is not None:
+                Cl["panel"].append(panel.Forces.CL)
+                Cd["panel"].append(panel.Forces.Cd)
+                CL_Cd["panel"].append(panel.Forces.CL_Cd)
+                C_Mle["panel"].append(panel.Forces.C_MLE)
+            if kutta is not None:
+                Cl["kutta"].append(kutta.Forces.CL)
+            if subsonic_friction is not None:
+                Cl["subsonic_friction"].append(subsonic_friction.Forces.CL)
+                Cd["subsonic_friction"].append(subsonic_friction.Forces.Cd)
+                CL_Cd["subsonic_friction"].append(subsonic_friction.Forces.CL_Cd)
+
         
-        if Cl["wave"] != [] and Cl["friction"] != []:
+        if Cl["wave"] != [] and Cl["supersonic_friction"] != []:
             for i in range(len(Cl["wave"])):
-                Cl["combined"].append(Cl["wave"][i]+Cl["friction"][i])
-                Cd["combined"].append(Cd["wave"][i]+Cd["friction"][i])
-                CL_Cd["combined"] = [combined_cl / combined_cd for combined_cl, combined_cd in zip(Cl["combined"], Cd["combined"])]
+                Cl["supersonic_combined"].append(Cl["wave"][i]+Cl["supersonic_friction"][i])
+                Cd["supersonic_combined"].append(Cd["wave"][i]+Cd["supersonic_friction"][i])
+                CL_Cd["supersonic_combined"] = [combined_cl / combined_cd for combined_cl, combined_cd in zip(Cl["supersonic_combined"], Cd["supersonic_combined"])]
+        if Cl["panel"] != [] and Cl["subsonic_friction"] != []:
+            for i in range(len(Cl["panel"])):
+                Cl["subsonic_combined(p)"].append(Cl["panel"][i]+Cl["subsonic_friction"][i])
+                Cd["subsonic_combined(p)"].append(Cd["panel"][i]+Cd["subsonic_friction"][i])
+                CL_Cd["subsonic_combined(p)"] = [combined_cl / combined_cd for combined_cl, combined_cd in zip(Cl["subsonic_combined(p)"], Cd["subsonic_combined(p)"])]
+        if Cl["kutta"] != [] and Cl["subsonic_friction"] != []:
+            for i in range(len(Cl["kutta"])):
+                Cl["subsonic_combined(k)"].append(Cl["kutta"][i]+Cl["subsonic_friction"][i])
+                Cd["subsonic_combined(k)"].append(Cd["subsonic_friction"][i])
+                CL_Cd["subsonic_combined(k)"] = [combined_cl / combined_cd for combined_cl, combined_cd in zip(Cl["subsonic_combined(k)"], Cd["subsonic_combined(k)"])]
 
         angles = [rad * 180 / math.pi for rad in AoA]
 
@@ -435,14 +536,33 @@ class ProgramPage(CTkFrame):
                 self.Cd_plot.add_point(angles, Cd["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
                 self.CL_Cd_plot.add_point(angles, CL_Cd["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
                 self.C_MLE_plot.add_point(angles, C_Mle["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
-            if Cl["friction"] != []:
-                self.CL_plot.add_point(angles, Cl["friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
-                self.Cd_plot.add_point(angles, Cd["friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
-                self.CL_Cd_plot.add_point(angles, CL_Cd["friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
-            if Cl["combined"] != []:
-                self.CL_plot.add_point(angles, Cl["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
-                self.Cd_plot.add_point(angles, Cd["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
-                self.CL_Cd_plot.add_point(angles, CL_Cd["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
+            if Cl["supersonic_friction"] != []:
+                self.CL_plot.add_point(angles, Cl["supersonic_friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+                self.Cd_plot.add_point(angles, Cd["supersonic_friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+                self.CL_Cd_plot.add_point(angles, CL_Cd["supersonic_friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+            if Cl["supersonic_combined"] != []:
+                self.CL_plot.add_point(angles, Cl["supersonic_combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
+                self.Cd_plot.add_point(angles, Cd["supersonic_combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
+                self.CL_Cd_plot.add_point(angles, CL_Cd["supersonic_combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
+            if Cl["panel"] != []:
+                self.CL_plot.add_point(angles, Cl["panel"], "Panel Method Forces", color="r", linestyle=linestyle_options[solver_index])
+                self.Cd_plot.add_point(angles, Cd["panel"], "Panel Method Forces", color="r", linestyle=linestyle_options[solver_index])
+                self.CL_Cd_plot.add_point(angles, CL_Cd["panel"], "Panel Method Forces", color="r", linestyle=linestyle_options[solver_index])
+                self.C_MLE_plot.add_point(angles, C_Mle["panel"], "Panel Method Forces", color="r", linestyle=linestyle_options[solver_index])
+            if Cl["kutta"] != []:
+                self.CL_plot.add_point(angles, Cl["kutta"], "Panel Method Kutta", color="b", linestyle=linestyle_options[solver_index])
+            if Cl["subsonic_friction"] != []:
+                self.CL_plot.add_point(angles, Cl["subsonic_friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+                self.Cd_plot.add_point(angles, Cd["subsonic_friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+                self.CL_Cd_plot.add_point(angles, CL_Cd["subsonic_friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+            if Cl["subsonic_combined(p)"] != []:
+                self.CL_plot.add_point(angles, Cl["subsonic_combined(p)"], "Combined (P)", color="y", linestyle=linestyle_options[solver_index])
+                self.Cd_plot.add_point(angles, Cd["subsonic_combined(p)"], "Combined (P)", color="y", linestyle=linestyle_options[solver_index])
+                self.CL_Cd_plot.add_point(angles, CL_Cd["subsonic_combined(p)"], "Combined (P)", color="y", linestyle=linestyle_options[solver_index])
+            if Cl["subsonic_combined(k)"] != []:
+                self.CL_plot.add_point(angles, Cl["subsonic_combined(k)"], "Combined (k)", color="m", linestyle=linestyle_options[solver_index])
+                self.Cd_plot.add_point(angles, Cd["subsonic_combined(k)"], "Combined (k)", color="m", linestyle=linestyle_options[solver_index])
+                self.CL_Cd_plot.add_point(angles, CL_Cd["subsonic_combined(k)"], "Combined (k)", color="m", linestyle=linestyle_options[solver_index])
 
         else:
             if Cl["wave"] != []:
@@ -455,14 +575,33 @@ class ProgramPage(CTkFrame):
                 self.Cd_plot.add_line(angles, Cd["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
                 self.CL_Cd_plot.add_line(angles, CL_Cd["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
                 self.C_MLE_plot.add_line(angles, C_Mle["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
-            if Cl["friction"] != []:
-                self.CL_plot.add_line(angles, Cl["friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
-                self.Cd_plot.add_line(angles, Cd["friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
-                self.CL_Cd_plot.add_line(angles, CL_Cd["friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
-            if Cl["combined"] != []:
-                self.CL_plot.add_line(angles, Cl["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
-                self.Cd_plot.add_line(angles, Cd["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
-                self.CL_Cd_plot.add_line(angles, CL_Cd["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
+            if Cl["supersonic_friction"] != []:
+                self.CL_plot.add_line(angles, Cl["supersonic_friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+                self.Cd_plot.add_line(angles, Cd["supersonic_friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+                self.CL_Cd_plot.add_line(angles, CL_Cd["supersonic_friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+            if Cl["supersonic_combined"] != []:
+                self.CL_plot.add_line(angles, Cl["supersonic_combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
+                self.Cd_plot.add_line(angles, Cd["supersonic_combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
+                self.CL_Cd_plot.add_line(angles, CL_Cd["supersonic_combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
+            if Cl["panel"] != []:
+                self.CL_plot.add_line(angles, Cl["panel"], "Panel Method Forces", color="r", linestyle=linestyle_options[solver_index])
+                self.Cd_plot.add_line(angles, Cd["panel"], "Panel Method Forces", color="r", linestyle=linestyle_options[solver_index])
+                self.CL_Cd_plot.add_line(angles, CL_Cd["panel"], "Panel Method Forces", color="r", linestyle=linestyle_options[solver_index])
+                self.C_MLE_plot.add_line(angles, C_Mle["panel"], "Panel Method Forces", color="r", linestyle=linestyle_options[solver_index])
+            if Cl["kutta"] != []:
+                self.CL_plot.add_line(angles, Cl["kutta"], "Panel Method Kutta", color="b", linestyle=linestyle_options[solver_index])
+            if Cl["subsonic_friction"] != []:
+                self.CL_plot.add_line(angles, Cl["subsonic_friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+                self.Cd_plot.add_line(angles, Cd["subsonic_friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+                self.CL_Cd_plot.add_line(angles, CL_Cd["subsonic_friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+            if Cl["subsonic_combined(p)"] != []:
+                self.CL_plot.add_line(angles, Cl["subsonic_combined(p)"], "Combined (P)", color="y", linestyle=linestyle_options[solver_index])
+                self.Cd_plot.add_line(angles, Cd["subsonic_combined(p)"], "Combined (P)", color="y", linestyle=linestyle_options[solver_index])
+                self.CL_Cd_plot.add_line(angles, CL_Cd["subsonic_combined(p)"], "Combined (P)", color="y", linestyle=linestyle_options[solver_index])
+            if Cl["subsonic_combined(k)"] != []:
+                self.CL_plot.add_line(angles, Cl["subsonic_combined(k)"], "Combined (k)", color="m", linestyle=linestyle_options[solver_index])
+                self.Cd_plot.add_line(angles, Cd["subsonic_combined(k)"], "Combined (k)", color="m", linestyle=linestyle_options[solver_index])
+                self.CL_Cd_plot.add_line(angles, CL_Cd["subsonic_combined(k)"], "Combined (k)", color="m", linestyle=linestyle_options[solver_index])
 
         self.command_interface.show_message(f"New data plotted for Airfoil '{self.Airfoils[solver_index].name}'", False)
 

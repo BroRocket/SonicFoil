@@ -3,7 +3,6 @@
 # python setup.py build_ext --inplace
 
 
-
 from setuptools import setup, Extension
 import pybind11
 import sys
@@ -24,8 +23,10 @@ sources = [
     "Airfoil/airfoil.cpp",
     "Analysis/oblique_shock.cpp",
     "Analysis/oblique_expansion.cpp",
+    "Analysis/hess_smith.cpp",
     "Solvers/solver.cpp",
     "Solvers/aerodynamic_forces.cpp",
+    "Tools/matrix.cpp"
 ]
 
 include_dirs = [
@@ -71,6 +72,6 @@ ext_modules = [
 # ------------------------------
 setup(
     name="sonicfoil_backend",
-    version="0.1",
+    version="0.2",
     ext_modules=ext_modules,
 )
