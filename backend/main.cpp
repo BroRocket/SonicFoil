@@ -8,21 +8,30 @@
 
 int main(){
 
-    Airfoil test_airfoil("C:/Users/Brody Howard/Documents/GitHub/SonicFoil/Airfoil Files/test.dat");
-    //stest_airfoil.print_airfoil();
+    Airfoil test_airfoil("C:/Users/Brody Howard/Documents/GitHub/SonicFoil/Airfoil Files/NACA2408.dat");
     Solver test_solver(test_airfoil);
-    //test_solver.solve_single("w", 20*M_PI/180, 2.3, 101000, 275, 1.225);
-    std::vector<double> angles;
-    double max_angle = 15 * M_PI / 180;
-    double step_size = 0.005 * M_PI / 180;
-    double temp = 0;
-    while (temp < max_angle) {
-        angles.push_back(temp);
-        temp = temp + step_size;
-    };
-    angles.push_back(max_angle);
 
-    test_solver.solve_range("w", angles, 2.3, 101000, 275, 1.225);
+    Result res = test_solver.solve_single("b", 3* M_PI / 180, 0.2, 101000, 285, 1.225);
+    Airfoil kutta = res.panel_kutta_solution.value();
+    Airfoil panel = res.panel_forces_solution.value();
+    std::cout << "Kutta CL = " << kutta.Forces.CL << " Kutta Cd = " << kutta.Forces.Cd;
+    std::cout << "\n Panel CL = " << panel.Forces.CL << " Panel Cd = " << panel.Forces.Cd << " Panel Cl/Cd = " << panel.Forces.CL_Cd;
+
+    // Airfoil test_airfoil("C:/Users/Brody Howard/Documents/GitHub/SonicFoil/Airfoil Files/test.dat");
+    // //stest_airfoil.print_airfoil();
+    // Solver test_solver(test_airfoil);
+    // //test_solver.solve_single("w", 20*M_PI/180, 2.3, 101000, 275, 1.225);
+    // std::vector<double> angles;
+    // double max_angle = 15 * M_PI / 180;
+    // double step_size = 0.005 * M_PI / 180;
+    // double temp = 0;
+    // while (temp < max_angle) {
+    //     angles.push_back(temp);
+    //     temp = temp + step_size;
+    // };
+    // angles.push_back(max_angle);
+
+    // test_solver.solve_range("w", angles, 2.3, 101000, 275, 1.225);
     //test_solver.print_solutions();
     
 

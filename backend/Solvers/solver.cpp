@@ -7,8 +7,8 @@
 #include <cmath>
 #include <vector>
 
-Solver::Solver(Airfoil &airfoil_template, double gamma_)
-    : success(true), error_msg("N/A"), airfoil_template(airfoil_template), gamma(gamma_) {};
+Solver::Solver(Airfoil &airfoil_template, double gamma_, double R_)
+    : success(true), error_msg("N/A"), airfoil_template(airfoil_template), gamma(gamma_), R(R_) {};
 
 Result Solver::solve_single(std::string method, double AoA, double M0, double P0, double T0, double rho0){
 
@@ -16,21 +16,42 @@ Result Solver::solve_single(std::string method, double AoA, double M0, double P0
 
         Airfoil HessSmithfoil = airfoil_template;   
         double kutta_Cl = HessSmith_method(HessSmithfoil, AoA, M0, P0, T0, rho0);
-        AerodynamicForces(HessSmithfoil, AoA, P0, M0);
         
-        if (method[1] == 'h') {
+        if (method[0] == 'h') {
+            AerodynamicForces(HessSmithfoil, AoA, P0, M0);
             if (method[1] == 'd') {
-            // do skin friction calc for subsonic
+                Airfoil dragfoil = airfoil_template;
+                skin_friction_supersonic(HessSmithfoil, dragfoil, AoA);
+                return Result(std::nullopt, std::nullopt, std::nullopt, HessSmithfoil, std::nullopt, dragfoil);
+            } else {
+                return Result(std::nullopt, std::nullopt, std::nullopt, HessSmithfoil, std::nullopt, std::nullopt);
             };
-        } else if (method[1] == 'k') {
+        } else if (method[0] == 'k') {
+            HessSmithfoil.Forces.CL = kutta_Cl;
+            HessSmithfoil.Forces.Cd = 0;
             if (method[1] == 'd') {
-            // do skin friction calc for subsonic
+                Airfoil dragfoil = airfoil_template;
+                skin_friction_supersonic(HessSmithfoil, dragfoil, AoA);
+                return Result(std::nullopt, std::nullopt, std::nullopt, std::nullopt, HessSmithfoil, dragfoil);
+            } else {
+                return Result(std::nullopt, std::nullopt, std::nullopt, std::nullopt, HessSmithfoil, std::nullopt);
             };
-        }
+        }else if (method[0] == 'b'){
+            Airfoil kutta_airfoil = HessSmithfoil;
+            AerodynamicForces(HessSmithfoil, AoA, P0, M0);
+            kutta_airfoil.Forces.CL = kutta_Cl;
+            kutta_airfoil.Forces.Cd = 0;
+            if (method[1] == 'd') {
+                Airfoil dragfoil = airfoil_template;
+                skin_friction_supersonic(HessSmithfoil, dragfoil, AoA);
+                return Result(std::nullopt, std::nullopt, std::nullopt, HessSmithfoil, kutta_airfoil, dragfoil);
+            } else {
+                return Result(std::nullopt, std::nullopt, std::nullopt, HessSmithfoil, kutta_airfoil, std::nullopt);
+            };
+        } else {
+            throw std::invalid_argument("Invalid Method");
+        };
         
-
-
-
     } else { // throw std::invalid_argument("Freestream Mach must be > 1.");
   
     if (method[0] == 'w') {
@@ -44,18 +65,17 @@ Result Solver::solve_single(std::string method, double AoA, double M0, double P0
         if (method[1] == 'd') {
             Airfoil dragfoil = airfoil_template;
             skin_friction_supersonic(wavefoil, dragfoil, AoA);
-            return Result(wavefoil, std::nullopt, dragfoil);
+            return Result(wavefoil, std::nullopt, dragfoil, std::nullopt, std::nullopt, std::nullopt);
         } else {
-            return Result(wavefoil, std::nullopt, std::nullopt);
+            return Result(wavefoil, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt);
         }
-
-        
+   
     } else if (method[0] == 'a') {
         Airfoil ackeretfoil = airfoil_template;
         ackeret_method(ackeretfoil, AoA, M0, P0, T0, rho0);
         AerodynamicForces(ackeretfoil, AoA, P0, M0);
 
-        return Result(std::nullopt, ackeretfoil, std::nullopt);
+        return Result(std::nullopt, ackeretfoil, std::nullopt, std::nullopt, std::nullopt, std::nullopt);
 
     } else if (method[0] == 'b') {
         Airfoil wavefoil = airfoil_template;
@@ -70,11 +90,10 @@ Result Solver::solve_single(std::string method, double AoA, double M0, double P0
         if (method[1] == 'd') {
             Airfoil dragfoil = airfoil_template;
             skin_friction_supersonic(wavefoil, dragfoil, AoA);
-            return Result(wavefoil, ackeretfoil, dragfoil);
+            return Result(wavefoil, ackeretfoil, dragfoil, std::nullopt, std::nullopt, std::nullopt);
         } else {
-            return Result(wavefoil, ackeretfoil, std::nullopt);
+            return Result(wavefoil, ackeretfoil, std::nullopt, std::nullopt, std::nullopt, std::nullopt);
         }
-
 
         } else {
             throw std::invalid_argument("Invalid Method");
@@ -95,16 +114,17 @@ void Solver::solve_range(std::string method, const std::vector<double>& angles, 
             Result r = solve_single(method, angles[i], M0, P0, T0, rho0);
             Results.push_back(r);
         }
+    } catch (const std::invalid_argument& e) {
+        success = false;
+        error_msg = e.what();
     } catch (const std::runtime_error& e) {
         success = false;
         error_msg = e.what();
     } catch (const std::exception& e) {
         success = false;
         error_msg = e.what();
-    } catch (const std::invalid_argument& e) {
-        success = false;
-        error_msg = e.what();
     } catch (...) {
+        success = false;
         std::cerr << " Unkown Error " << std::endl;
     };
     // auto end = std::chrono::high_resolution_clock::now();
@@ -252,7 +272,7 @@ double Solver::HessSmith_method(Airfoil &airfoil, double alpha, double M0, doubl
 
 // Supersonic Friction
 
-double Solver::iterare_recovery_factor(double r_guess, double s, Segment& seg){
+double Solver::iterate_recovery_factor(double r_guess, double s, const Segment& seg){
 
     double r = r_guess;
     double r_old = 0;
@@ -266,13 +286,13 @@ double Solver::iterare_recovery_factor(double r_guess, double s, Segment& seg){
     double Prandtl_number;
 
     while (fabs(r - r_old) > 1e-3 && num_iterations < 300) {
-        T_wall_adia = seg.state.T * (1 + r * ((gamma - 1)/2) * seg.state.M * seg.state.M);
-        T_reference = seg.state.T * (0.5 + 0.039 * seg.state.M * seg.state.M + 0.5 * (T_wall_adia/seg.state.T));
-        dynamic_viscocity = 1.716e-5 * std::pow(T_reference/273, 1.5) * ((273 + 111)/(T_reference + 111));
-        density = seg.state.p / (287 * T_reference);
-        Re_s = (density * (seg.state.M * std::sqrt(gamma * 287 * T_reference)) * s) / dynamic_viscocity;
+        T_wall_adia = seg.state.T * (1 + r * ((gamma - 1)/2) * seg.state.M * seg.state.M); // Assuming adibatic so T_wall = T_wall_Adia
+        T_reference = seg.state.T + 0.5 * (T_wall_adia - seg.state.T) + 0.22* (T_wall_adia - seg.state.T);
+        dynamic_viscocity = 1.716e-5 * std::pow(T_reference/273.15, 1.5) * ((273.15 + 110.4)/(T_reference + 110.4));
+        density = seg.state.p / (R * T_reference);
+        Re_s = (density * (seg.state.M * std::sqrt(gamma * R * seg.state.T)) * s) / dynamic_viscocity;
 
-        Prandtl_number = (1005 * dynamic_viscocity) / (0.0241 * std::pow(T_reference/273, 1.5) * ((273 + 194)/(T_reference + 194)));
+        Prandtl_number = (1005 * dynamic_viscocity) / (0.0241 * std::pow(T_reference/273.15, 1.5) * ((273.15 + 194)/(T_reference + 194)));
 
         r_old = r;
         if (Re_s < 5e5) {
@@ -287,7 +307,7 @@ double Solver::iterare_recovery_factor(double r_guess, double s, Segment& seg){
     
 };
 
-FrictionForces Solver::compute_surface_skin_friction_supersonic(std::vector<Segment>& segs, double alpha) {
+FrictionForces Solver::compute_surface_skin_friction_supersonic(const std::vector<Segment>& segs, double alpha) {
 
     double panel_drag_coefficient;
     double drag_coefficient = 0;
@@ -300,15 +320,23 @@ FrictionForces Solver::compute_surface_skin_friction_supersonic(std::vector<Segm
 
         double panel_distance = segs[i].length;
         double distance = s + panel_distance;
-        double r = iterare_recovery_factor(0.9, distance, segs[i]);
+        double r = iterate_recovery_factor(0.9, distance, segs[i]);
         double T_wall_adia = segs[i].state.T * (1 + r * ((gamma - 1)/2) * segs[i].state.M * segs[i].state.M);
-        double T_reference = segs[i].state.T * (0.5 + 0.039 * segs[i].state.M * segs[i].state.M + 0.5 * (T_wall_adia/segs[i].state.T));
-        double dynamic_viscocity = 1.716e-5 * std::pow(T_reference/273, 1.5) * ((273 + 111)/(T_reference + 111));
-        double density = segs[i].state.p / (287 * T_reference);
-        double Re_s = (density * (segs[i].state.M * std::sqrt(gamma * 287 * T_reference)) * distance) / dynamic_viscocity;
+        double T_reference = segs[i].state.T + 0.5 * (T_wall_adia - segs[i].state.T) + 0.22* (T_wall_adia - segs[i].state.T);
+        double dynamic_viscocity = 1.716e-5 * std::pow(T_reference/273.15, 1.5) * ((273.15 + 110.4)/(T_reference + 110.4));
+        double density = segs[i].state.p / (R * T_reference);
+        double Re_s = (density * (segs[i].state.M * std::sqrt(gamma * R * segs[i].state.T)) * distance) / dynamic_viscocity;
 
-        // could chang eot chekc end of plate isn't over the trnaisiton this would be smarter
+        // could chang eot chekc end of plate isn't over the trnaisiton this would be smarter // beleive it does now
         if (Re_s < 5e5) {
+
+            double d_laminar = s + (panel_distance)/2;
+            r = iterate_recovery_factor(0.9, d_laminar, segs[i]);
+            T_wall_adia = segs[i].state.T * (1 + r * ((gamma - 1)/2) * segs[i].state.M * segs[i].state.M);
+            T_reference = segs[i].state.T + 0.5 * (T_wall_adia - segs[i].state.T) + 0.22* (T_wall_adia - segs[i].state.T);
+            dynamic_viscocity = 1.716e-5 * std::pow(T_reference/273.15, 1.5) * ((273.15 + 110.4)/(T_reference + 110.4));
+            density = segs[i].state.p / (R * T_reference);
+            Re_s = (density * (segs[i].state.M * std::sqrt(gamma * R * segs[i].state.T)) * d_laminar) / dynamic_viscocity;
            
             panel_skin_friction_coefficient = 0.664 / std::sqrt(Re_s);
             panel_drag_coefficient = panel_skin_friction_coefficient * (panel_distance/1); // chord lenght is one
@@ -317,11 +345,11 @@ FrictionForces Solver::compute_surface_skin_friction_supersonic(std::vector<Segm
 
             if (transition == true) {
 
-                double s_crit = (5e5 * dynamic_viscocity) / (density * (segs[i].state.M * std::sqrt(gamma * 287 * T_reference)));
+                double s_crit = (5e5 * dynamic_viscocity) / (density * (segs[i].state.M * std::sqrt(gamma * R * segs[i].state.T)));
 
                 if (s_crit <= s){
 
-                    // switch must have happened at back end of panel or in between so ignore and asusme all turbulent. 
+                    // switch must have happened at back end of last panel or in between so ignore and assume all turbulent. 
 
                     panel_skin_friction_coefficient = 0.0576 / std::pow(Re_s, 0.2);
                     panel_drag_coefficient = panel_skin_friction_coefficient * (panel_distance/1); // chord lenght is one
@@ -333,17 +361,17 @@ FrictionForces Solver::compute_surface_skin_friction_supersonic(std::vector<Segm
                     double s_crit_old = 0;
                     int num_iterations = 0;
 
-                    while (fabs(s_crit - s_crit_old) > 1e-3 && num_iterations < 500){
+                    while (fabs(s_crit - s_crit_old) > 1e-4 && num_iterations < 500){
 
-                        r = iterare_recovery_factor(0.9, s_crit, segs[i]);
+                        r = iterate_recovery_factor(0.9, s_crit, segs[i]);
 
                         T_wall_adia =  segs[i].state.T * (1 + r * ((gamma - 1)/2) *  segs[i].state.M *  segs[i].state.M);
-                        T_reference =  segs[i].state.T * (0.5 + 0.039 *  segs[i].state.M *  segs[i].state.M + 0.5 * (T_wall_adia/segs[i].state.T));
-                        dynamic_viscocity = 1.716e-5 * std::pow(T_reference/273, 1.5) * ((273 + 111)/(T_reference + 111));
-                        density =  segs[i].state.p / (287 * T_reference);
+                        T_reference = segs[i].state.T + 0.5 * (T_wall_adia - segs[i].state.T) + 0.22* (T_wall_adia - segs[i].state.T);
+                        dynamic_viscocity = 1.716e-5 * std::pow(T_reference/273.15, 1.5) * ((273.15 + 110.4)/(T_reference + 110.4));
+                        density =  segs[i].state.p / (R * T_reference);
                         
                         s_crit_old = s_crit;
-                        s_crit = (5e5 * dynamic_viscocity) / (density * (segs[i].state.M * std::sqrt(gamma * 287 * T_reference)));
+                        s_crit = (5e5 * dynamic_viscocity) / (density * (segs[i].state.M * std::sqrt(gamma * R * segs[i].state.T)));
 
                         num_iterations += 1;
                     };
@@ -351,22 +379,22 @@ FrictionForces Solver::compute_surface_skin_friction_supersonic(std::vector<Segm
                     double d_laminar = s + (s_crit - s)/2;
                     double d_turbulent = s + (s + panel_distance - s_crit)/2;
 
-                    r = iterare_recovery_factor(0.9, d_laminar, segs[i]);
+                    r = iterate_recovery_factor(0.9, d_laminar, segs[i]);
                     T_wall_adia = segs[i].state.T * (1 + r * ((gamma - 1)/2) * segs[i].state.M * segs[i].state.M);
-                    T_reference = segs[i].state.T * (0.5 + 0.039 * segs[i].state.M * segs[i].state.M + 0.5 * (T_wall_adia/segs[i].state.T));
-                    dynamic_viscocity = 1.716e-5 * std::pow(T_reference/273, 1.5) * ((273 + 111)/(T_reference + 111));
-                    density = segs[i].state.p / (287 * T_reference);
-                    Re_s = (density * (segs[i].state.M * std::sqrt(gamma * 287 * T_reference)) * d_laminar) / dynamic_viscocity;
+                    T_reference = segs[i].state.T + 0.5 * (T_wall_adia - segs[i].state.T) + 0.22* (T_wall_adia - segs[i].state.T);
+                    dynamic_viscocity = 1.716e-5 * std::pow(T_reference/273.15, 1.5) * ((273.15 + 110.4)/(T_reference + 110.4));
+                    density = segs[i].state.p / (R * T_reference);
+                    Re_s = (density * (segs[i].state.M * std::sqrt(gamma * R * segs[i].state.T)) * d_laminar) / dynamic_viscocity;
 
                     panel_skin_friction_coefficient = 0.664 / std::sqrt(Re_s);
                     panel_drag_coefficient = panel_skin_friction_coefficient * ((s_crit - s)/1); // chord lenght is one
 
-                    r = iterare_recovery_factor(0.9, d_turbulent, segs[i]);
+                    r = iterate_recovery_factor(0.9, d_turbulent, segs[i]);
                     T_wall_adia = segs[i].state.T * (1 + r * ((gamma - 1)/2) * segs[i].state.M * segs[i].state.M);
-                    T_reference = segs[i].state.T * (0.5 + 0.039 * segs[i].state.M * segs[i].state.M + 0.5 * (T_wall_adia/segs[i].state.T));
-                    dynamic_viscocity = 1.716e-5 * std::pow(T_reference/273, 1.5) * ((273 + 111)/(T_reference + 111));
-                    density = segs[i].state.p / (287 * T_reference);
-                    Re_s = (density * (segs[i].state.M * std::sqrt(gamma * 287 * T_reference)) * d_turbulent) / dynamic_viscocity;
+                    T_reference = segs[i].state.T + 0.5 * (T_wall_adia - segs[i].state.T) + 0.22* (T_wall_adia - segs[i].state.T);
+                    dynamic_viscocity = 1.716e-5 * std::pow(T_reference/273.15, 1.5) * ((273.15 + 110.4)/(T_reference + 110.4));
+                    density = segs[i].state.p / (R * T_reference);
+                    Re_s = (density * (segs[i].state.M * std::sqrt(gamma * R * segs[i].state.T)) * d_turbulent) / dynamic_viscocity;
 
                     panel_skin_friction_coefficient = 0.0576 / std::pow(Re_s, 0.2);
                     panel_drag_coefficient += panel_skin_friction_coefficient * ((s + panel_distance - s_crit)/1); // chord lenght is one
@@ -376,7 +404,15 @@ FrictionForces Solver::compute_surface_skin_friction_supersonic(std::vector<Segm
                 transition = false;
 
             } else {
-                
+
+                double d_turbulent = s + (panel_distance)/2;
+                r = iterate_recovery_factor(0.9, d_turbulent, segs[i]);
+                T_wall_adia = segs[i].state.T * (1 + r * ((gamma - 1)/2) * segs[i].state.M * segs[i].state.M);
+                T_reference = segs[i].state.T + 0.5 * (T_wall_adia - segs[i].state.T) + 0.22* (T_wall_adia - segs[i].state.T);
+                dynamic_viscocity = 1.716e-5 * std::pow(T_reference/273.15, 1.5) * ((273.15 + 110.4)/(T_reference + 110.4));
+                density = segs[i].state.p / (R * T_reference);
+                Re_s = (density * (segs[i].state.M * std::sqrt(gamma * R * segs[i].state.T)) * d_turbulent) / dynamic_viscocity;
+            
                 panel_skin_friction_coefficient = 0.0576 / std::pow(Re_s, 0.2);
                 panel_drag_coefficient = panel_skin_friction_coefficient * (panel_distance/1); // chord lenght is one
 
@@ -416,7 +452,7 @@ void Solver::skin_friction_supersonic(Airfoil &airfoil, Airfoil &result_airfoil,
 // Subsonic Skin fricton drag
 // simple method using flat plate approximation
 
-FrictionForces Solver::compute_surface_skin_friction_subsonic(std::vector<Segment>& segs, double alpha, double rho_inf, double U_inf, double mu_inf)
+FrictionForces Solver::compute_surface_skin_friction_subsonic(std::vector<Segment>& segs, double alpha)
 {
     double drag_coefficient = 0.0;
     double lift_coefficient = 0.0;
@@ -426,10 +462,11 @@ FrictionForces Solver::compute_surface_skin_friction_subsonic(std::vector<Segmen
     for (size_t i = 0; i < segs.size(); ++i)
     {
         double panel_length = segs[i].length;
-        double U_e = segs[i].state.Ue;   // tangential velocity from panel method
+        double U_e = segs[i].state.M * std::sqrt(gamma*R*segs[i].state.T);   // tangential velocity from panel method
         double distance = s + panel_length;
+        double dynamic_viscoity = (1.458e-6 * std::pow(segs[i].state.T, 1.5))/(segs[i].state.T + 110.4);
 
-        double Re_s = (rho_inf * U_e * distance) / mu_inf;
+        double Re_s = (segs[i].state.rho * U_e * distance) / dynamic_viscoity;
 
         double Cf;
         double panel_drag;
@@ -444,7 +481,7 @@ FrictionForces Solver::compute_surface_skin_friction_subsonic(std::vector<Segmen
         {
             if (transition)
             {
-                double s_crit = (5e5 * mu_inf) / (rho_inf * U_e);
+                double s_crit = (5e5 * dynamic_viscoity) / (segs[i].state.rho * U_e);
 
                 if (s_crit <= s)
                 {
@@ -456,10 +493,10 @@ FrictionForces Solver::compute_surface_skin_friction_subsonic(std::vector<Segmen
                 {
                     // Split laminar + turbulent region
 
-                    double Re_lam = rho_inf * U_e * s_crit / mu_inf;
+                    double Re_lam = segs[i].state.rho * U_e * s_crit / dynamic_viscoity;
                     double Cf_lam = 0.664 / std::sqrt(Re_lam);
 
-                    double Re_turb = rho_inf * U_e * distance / mu_inf;
+                    double Re_turb = segs[i].state.rho * U_e * distance / dynamic_viscoity;
                     double Cf_turb = 0.0592 / std::pow(Re_turb, 0.2);
 
                     panel_drag =
@@ -487,6 +524,19 @@ FrictionForces Solver::compute_surface_skin_friction_subsonic(std::vector<Segmen
     }
 
     return {drag_coefficient, lift_coefficient};
+}
+
+void Solver::skin_friction_subsonic(Airfoil &airfoil, Airfoil &result_airfoil, double alpha) {
+    // SImple flat plate approximation for upper and lower airofil surface
+    // Considers both laminar and tubrulent and trnaistional boundary layer states. 
+    // Computes the skin friction across both top and bottom of airfoil
+    FrictionForces top_friction = compute_surface_skin_friction_subsonic(airfoil.top_segments, alpha);
+    FrictionForces bottom_friction = compute_surface_skin_friction_subsonic(airfoil.bottom_segments, alpha);
+
+    result_airfoil.Forces.CL = top_friction.CL + bottom_friction.CL;
+    result_airfoil.Forces.Cd = top_friction.CD + bottom_friction.CD;
+    result_airfoil.Forces.CL_Cd = result_airfoil.Forces.CL/result_airfoil.Forces.Cd;
+
 }
 
 

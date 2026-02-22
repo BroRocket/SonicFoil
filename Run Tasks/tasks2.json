@@ -1,34 +1,48 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "Build Sonicfoil Python Module (MSVC)",
-            "type": "shell",
-            "command": "cl.exe",
-            "args": [
-                "/LD",                   
-                "/O2",                   
-                "/std:c++17",
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build: test_matrix",
+      "type": "shell",
+      "command": "g++",
+      "args": [
+        "-std=c++17",
+        "-O2",
+        "-Wall",
+        "-Wextra",
+        "-pedantic",
+        "${workspaceFolder}/backend/Tools/test_matrix.cpp",
+        "${workspaceFolder}/backend/Tools/matrix.cpp",
+        "-o",
+        "${workspaceFolder}/backend/Tools/test_matrix"
+      ],
+      "problemMatcher": ["$gcc"],
+      "group": { "kind": "build", "isDefault": true },
 
-                "/I", "C:/Users/Brody Howard/AppData/Local/Programs/Python/Python310/include",
-                "/I", "C:/Users/Brody Howard/AppData/Local/Programs/Python/Python310/Lib/site-packages/pybind11/include",
-                "/I", "Airfoil",
-                "/I", "Analysis",
-                "/I", "Tools",
-                "/I", "Solvers",
-
-                "bindings.cpp",
-                "Airfoil/airfoil.cpp",
-                "Analysis/oblique_shock.cpp",
-                "Analysis/oblique_expansion.cpp",
-                "Solvers/solver.cpp",
-                "Solvers/aerodynamic_forces.cpp",
-
-                "/link",
-                "/OUT:sonicfoil_backend.pyd",
-                "C:/Users/Brody Howard/AppData/Local/Programs/Python/Python310/libs/python310.lib"
-            ],
-            "problemMatcher": ["$msCompile"]
-        }
-    ]
+      "windows": {
+        "command": "g++",
+        "args": [
+          "-std=c++17",
+          "-O2",
+          "-Wall",
+          "-Wextra",
+          "-pedantic",
+          "${workspaceFolder}\\backend\\Tools\\test_matrix.cpp",
+          "${workspaceFolder}\\backend\\Tools\\matrix.cpp",
+          "-o",
+          "${workspaceFolder}\\backend\\Tools\\test_matrix.exe"
+        ]
+      }
+    },
+    {
+      "label": "run: test_matrix",
+      "type": "shell",
+      "dependsOn": "build: test_matrix",
+      "command": "${workspaceFolder}/backend/Tools/test_matrix",
+      "problemMatcher": [],
+      "windows": {
+        "command": "${workspaceFolder}\\backend\\Tools\\test_matrix.exe"
+      }
+    }
+  ]
 }

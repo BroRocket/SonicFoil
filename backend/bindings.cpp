@@ -52,7 +52,7 @@ PYBIND11_MODULE(sonicfoil_backend, m) {
             .def(pybind11::init<std::optional<Airfoil>, std::optional<Airfoil>, std::optional<Airfoil>>())
             .def_readonly("wave_solution", &Result::wave_solution)
             .def_readonly("ackeret_solution", &Result::ackeret_solution)
-            .def_readonly("skin_friction_solution", &Result::skin_friction_solution);
+            .def_readonly("skin_friction_solution_supersonic", &Result::skin_friction_solution_supersonic);
 
         pybind11::class_<Solver>(m, "Solver")
             .def(pybind11::init<Airfoil&,  double>(),

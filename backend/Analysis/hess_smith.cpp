@@ -8,7 +8,7 @@
 #include <algorithm>
 
 
-HessSmith::HessSmith(Airfoil &airfoil, double alpha, double M0, double T0) : airfoil_template(airfoil), M(M0), T(T0), V(M0*std::sqrt(1.4*287*T)), AoA(alpha), A_ij(airfoil.bottom_segments.size() + airfoil.top_segments.size() + 1, airfoil.bottom_segments.size() + airfoil.top_segments.size() + 1) {
+HessSmith::HessSmith(Airfoil &airfoil, double alpha, double M0, double T0, double gamma_) : airfoil_template(airfoil), M(M0), T(T0), V(M0*std::sqrt(1.4*287*T)), AoA(alpha), gamma(gamma_), A_ij(airfoil.bottom_segments.size() + airfoil.top_segments.size() + 1, airfoil.bottom_segments.size() + airfoil.top_segments.size() + 1) {
 
     airfoil_segments = airfoil.bottom_segments;
     std::reverse(airfoil_segments.begin(), airfoil_segments.end());
@@ -124,7 +124,7 @@ HessSmith::HessSmith(Airfoil &airfoil, double alpha, double M0, double T0) : air
 
 };
 
-Airfoil HessSmith::solve(double P0, double T0, double rho0, double gamma, double R) {
+Airfoil HessSmith::solve(double P0, double T0, double rho0) {
 
     std::vector<double> x_i = solve_pivot(A_ij, b_i);
 
@@ -173,24 +173,26 @@ Airfoil HessSmith::solve(double P0, double T0, double rho0, double gamma, double
     size_t i = 0;
     for (Segment &seg: airfoil_template.bottom_segments) {
         double Cp_i = 1 - ((v_ti[i]/V)*(v_ti[i]/V));
-        double T_i = T + ((gamma - 1)*((V*V - v_ti[i]*v_ti[i])/(2*gamma*R)));
-        double M_i = v_ti[i]/(std::sqrt(gamma*R*T_i));
-        double rho_i = rho0 * std::pow(((1 + ((gamma - 1)/2)*M*M)/(1 + ((gamma - 1)/2)*M_i*M_i)), (1/gamma));
         if (M > 0.3) {
             Cp_i = Cp_i / (std::sqrt(1 - M*M));
         };
-        double p_i = P0 + 0.5*rho0*V*V*Cp_i;
+        double p_i = P0 + 0.5 * rho0 * V * V * Cp_i;
+        double M_i = std::sqrt(((std::pow(P0/p_i, (gamma - 1)/gamma) * (1 + ((gamma - 1)/2)*M*M)) - 1) * (2/(gamma - 1)));
+        double T_i = T * std::pow(p_i/P0, (gamma - 1)/gamma);
+        double rho_i = rho0 * std::pow(p_i/P0, 1/gamma);
         set_state(seg, M_i, p_i, rho_i, T_i);
         ++i;
     };
     for (Segment &seg: airfoil_template.top_segments) {
         double Cp_i = 1 - ((v_ti[i]/V)*(v_ti[i]/V));
-        double M_i = M*(v_ti[i]/V);
         if (M > 0.3) {
             Cp_i = Cp_i / (std::sqrt(1 - M*M));
         };
-        double p_i = P0 + 0.5*rho0*V*V*Cp_i;
-        set_state(seg, M_i, p_i, rho0, T);
+        double p_i = P0 + 0.5 * rho0 * V * V * Cp_i;
+        double M_i = std::sqrt(((std::pow(P0/p_i, (gamma - 1)/gamma) * (1 + ((gamma - 1)/2)*M*M)) - 1) * (2/(gamma - 1)));
+        double T_i = T * std::pow(p_i/P0, (gamma - 1)/gamma);
+        double rho_i = rho0 * std::pow(p_i/P0, 1/gamma);
+        set_state(seg, M_i, p_i, rho_i, T_i);
         ++i;
     };
 
