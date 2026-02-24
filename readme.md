@@ -28,7 +28,6 @@ Describe how the code interfaces and object trasnfer etc.
 
 ## Next Additions
 Fix subsonic panel methos
-Add Cl vs CD plot
 Add expanded serpate plot window with all size plot types sode by side. That update with all other plots if opened. 
 Add fully coupled inviscid solver
 Add better description of limitations and errro messaging
