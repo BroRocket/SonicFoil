@@ -24,3 +24,12 @@ This will build the new **sonicfoil_backend.cp310-win_amd64.pyd** and make sure 
 
 ### Frontend - Backend Interface
 Describe how the code interfaces and object trasnfer etc. 
+
+
+## Next Additions
+Fix subsonic panel methos
+Add expanded serpate plot window with all size plot types sode by side. That update with all other plots if opened. 
+Add fully coupled inviscid solver
+Add better description of limitations and errro messaging
+Improve/Fix saving plots and data
+
