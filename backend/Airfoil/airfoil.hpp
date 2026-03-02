@@ -21,23 +21,31 @@ class Conditions {
 };
 
 class Segment {
-private: 
+public:
+    Segment(Cordinate start, Cordinate end, bool top) : start(start), end(end), midpoint(Cordinate((start.x + end.x)/2, (start.y + end.y)/2)), state(Conditions()), angle(get_angle(start, end)), x_distance(end.x - start.x), y_distance(end.y - start.y), length(std::hypot(x_distance, y_distance)) {
+        if (top == true){
+            norm_vec = {-std::sin(angle), std::cos(angle)};
+            tang_vec = {std::cos(angle), std::sin(angle)};
+        } else {
+            norm_vec = {std::sin(angle), -std::cos(angle)};
+            tang_vec = {-std::cos(angle), -std::sin(angle)};
+        };
+    };
+
     double get_angle(Cordinate start, Cordinate end) {
         return std::atan2(end.y - start.y, end.x - start.x);
     }
 
-public:
-    Segment(Cordinate start, Cordinate end) : start(start), end(end), midpoint(Cordinate((start.x + end.x)/2, (start.y + end.y)/2)), state(Conditions()), angle(get_angle(start, end)), norm_vec({-std::sin(angle), std::cos(angle)}), tang_vec({std::cos(angle), std::sin(angle)}), x_distance(end.x - start.x), y_distance(end.y - start.y), length(std::hypot(x_distance, y_distance)) {};
     Cordinate start;
     Cordinate end;
     Cordinate midpoint;
     Conditions state;
     double angle; 
-    std::pair<double, double> norm_vec;
-    std::pair<double, double> tang_vec;
     double x_distance;
     double y_distance;
     double length;
+    std::pair<double, double> norm_vec;
+    std::pair<double, double> tang_vec;
 };
 
 class AerodynamicCoefficients{

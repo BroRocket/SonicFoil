@@ -8,10 +8,10 @@
 
 int main(){
 
-    Airfoil test_airfoil("C:/Users/Brody Howard/Documents/GitHub/SonicFoil/Airfoil Files/NACA2408.dat");
+    Airfoil test_airfoil("C:/Users/Brody Howard/Documents/GitHub/SonicFoil/Airfoil Files/flat_diamond.dat");
     Solver test_solver(test_airfoil);
 
-    Result res = test_solver.solve_single("b", 8* M_PI / 180, 0.6, 101000, 285, 1.225);
+    Result res = test_solver.solve_single("b", 10* M_PI / 180, 0.2, 101000, 285, 1.225);
     Airfoil kutta = res.panel_kutta_solution.value();
     Airfoil panel = res.panel_forces_solution.value();
     std::cout << "Kutta CL = " << kutta.Forces.CL << " Kutta Cd = " << kutta.Forces.Cd;

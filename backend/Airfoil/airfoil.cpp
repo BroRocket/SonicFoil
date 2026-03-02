@@ -28,12 +28,12 @@ Airfoil::Airfoil(const std::string& filename) : Forces(AerodynamicCoefficients()
 
     for (size_t i = 0; i < cordinates.size() - 1; i++) {
         if (top == true) {
-            top_segments.push_back(Segment(cordinates[i+1], cordinates[i]));
+            top_segments.push_back(Segment(cordinates[i+1], cordinates[i], top));
             if (cordinates[i+1].x == 0 || cordinates[i+1].y == 0) {
                 top = false;
             };
         } else {    
-            bottom_segments.push_back(Segment(cordinates[i], cordinates[i+1]));
+            bottom_segments.push_back(Segment(cordinates[i], cordinates[i+1], top));
         };
     };
 

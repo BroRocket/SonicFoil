@@ -181,6 +181,9 @@ class ProgramPage(CTkFrame):
         self.CL_Cd_tab = self.plots.add("CL/Cd")
         self.CL_Cd_plot = CTkPlot(self.CL_Cd_tab, "Coeffecient of Lift/Drag Ratio", "alpha (degrees)", "CL/Cd", dpi=150)
 
+        self.CLvCd_tab = self.plots.add("CLvsCd")
+        self.CLvCd_plot = CTkPlot(self.CLvCd_tab, "Coeffecient of Lift vs. Coeffecient of Drag ", "Cd", "CL", dpi=150)
+
         self.C_MLE_tab = self.plots.add("C_MLE")
         self.C_MLE_plot = CTkPlot(self.C_MLE_tab, "Coefficient of Moment About Leading Edge", "alpha (degrees)", "C_MLE", dpi=150)
 
@@ -188,6 +191,7 @@ class ProgramPage(CTkFrame):
         self.CL_plot.pack(padx=0, pady=0, fill="both", expand=True)
         self.Cd_plot.pack(padx=0, pady=0, fill="both", expand=True)
         self.CL_Cd_plot.pack(padx=0, pady=0, fill="both", expand=True)
+        self.CLvCd_plot.pack(padx=0, pady=0, fill="both", expand=True)
         self.C_MLE_plot.pack(padx=0, pady=0, fill="both", expand=True)
 
         self.plots.grid(row=0, column=0, sticky="nsew")
@@ -210,6 +214,8 @@ class ProgramPage(CTkFrame):
             return
 
         if mach >= 1 and self.method_state != "sup":
+            if hasattr(self, "method_frame") and self.method_frame is not None: 
+                self.methods_frm.destroy()
             self.methods_frm = CTkFrame(self.inputs_frm)
             self.methods_frm.grid_columnconfigure((0, 1, 2), weight=1)
             self.methods_frm.grid_rowconfigure((0, 1), weight=1)
@@ -230,6 +236,8 @@ class ProgramPage(CTkFrame):
             self.method_state = "sup"
 
         elif mach < 1 and self.method_state != "sub":
+            if hasattr(self, "method_frame") and self.method_frame is not None: 
+                self.methods_frm.destroy()
             self.methods_frm = CTkFrame(self.inputs_frm)
             self.methods_frm.grid_columnconfigure((0, 1, 2, 3), weight=1)
             self.methods_frm.grid_rowconfigure(0, weight=1)
@@ -358,6 +366,7 @@ class ProgramPage(CTkFrame):
         self.CL_plot.clear()
         self.Cd_plot.clear()
         self.CL_Cd_plot.clear()
+        self.CLvCd_plot.clear()
         self.C_MLE_plot.clear()
         self.command_interface.show_message("Result plots cleared", False)
 
@@ -530,39 +539,47 @@ class ProgramPage(CTkFrame):
                 self.CL_plot.add_point(angles, Cl["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
                 self.Cd_plot.add_point(angles, Cd["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
                 self.CL_Cd_plot.add_point(angles, CL_Cd["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
+                self.CLvCd_plot.add_point(Cd["wave"], Cl["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
                 self.C_MLE_plot.add_point(angles, C_Mle["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
             if Cl["ackeret"] != []:
                 self.CL_plot.add_point(angles, Cl["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
                 self.Cd_plot.add_point(angles, Cd["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
                 self.CL_Cd_plot.add_point(angles, CL_Cd["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
+                self.CLvCd_plot.add_point(Cd["ackeret"], Cl["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
                 self.C_MLE_plot.add_point(angles, C_Mle["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
             if Cl["supersonic_friction"] != []:
                 self.CL_plot.add_point(angles, Cl["supersonic_friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
                 self.Cd_plot.add_point(angles, Cd["supersonic_friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
                 self.CL_Cd_plot.add_point(angles, CL_Cd["supersonic_friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+                self.CLvCd_plot.add_point(Cd["supersonic_friction"], Cl["supersonic_friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
             if Cl["supersonic_combined"] != []:
                 self.CL_plot.add_point(angles, Cl["supersonic_combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
                 self.Cd_plot.add_point(angles, Cd["supersonic_combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
                 self.CL_Cd_plot.add_point(angles, CL_Cd["supersonic_combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
+                self.CLvCd_plot.add_point(Cd["supersonic_combined"], Cl["supersonic_combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
             if Cl["panel"] != []:
                 self.CL_plot.add_point(angles, Cl["panel"], "Panel Method Forces", color="r", linestyle=linestyle_options[solver_index])
                 self.Cd_plot.add_point(angles, Cd["panel"], "Panel Method Forces", color="r", linestyle=linestyle_options[solver_index])
                 self.CL_Cd_plot.add_point(angles, CL_Cd["panel"], "Panel Method Forces", color="r", linestyle=linestyle_options[solver_index])
                 self.C_MLE_plot.add_point(angles, C_Mle["panel"], "Panel Method Forces", color="r", linestyle=linestyle_options[solver_index])
+                self.CLvCd_plot.add_point(Cd["panel"], Cl["panel"], "Panel Method Forces", color="r", linestyle=linestyle_options[solver_index])
             if Cl["kutta"] != []:
                 self.CL_plot.add_point(angles, Cl["kutta"], "Panel Method Kutta", color="b", linestyle=linestyle_options[solver_index])
             if Cl["subsonic_friction"] != []:
                 self.CL_plot.add_point(angles, Cl["subsonic_friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
                 self.Cd_plot.add_point(angles, Cd["subsonic_friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
                 self.CL_Cd_plot.add_point(angles, CL_Cd["subsonic_friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+                self.CLvCd_plot.add_point(Cd["subsonic_friction"], Cl["subsonic_friction"], "Skin Frictions", color="g", linestyle=linestyle_options[solver_index])
             if Cl["subsonic_combined(p)"] != []:
                 self.CL_plot.add_point(angles, Cl["subsonic_combined(p)"], "Combined (P)", color="y", linestyle=linestyle_options[solver_index])
                 self.Cd_plot.add_point(angles, Cd["subsonic_combined(p)"], "Combined (P)", color="y", linestyle=linestyle_options[solver_index])
                 self.CL_Cd_plot.add_point(angles, CL_Cd["subsonic_combined(p)"], "Combined (P)", color="y", linestyle=linestyle_options[solver_index])
+                self.CLvCd_plot.add_point(Cd["subsonic_combined(p)"], Cl["subsonic_combined(p)"], "Combined (P)", color="y", linestyle=linestyle_options[solver_index])
             if Cl["subsonic_combined(k)"] != []:
                 self.CL_plot.add_point(angles, Cl["subsonic_combined(k)"], "Combined (k)", color="m", linestyle=linestyle_options[solver_index])
                 self.Cd_plot.add_point(angles, Cd["subsonic_combined(k)"], "Combined (k)", color="m", linestyle=linestyle_options[solver_index])
                 self.CL_Cd_plot.add_point(angles, CL_Cd["subsonic_combined(k)"], "Combined (k)", color="m", linestyle=linestyle_options[solver_index])
+                self.CLvCd_plot.add_point(Cd["subsonic_combined(k)"], Cl["subsonic_combined(k)"], "Combined (k)", color="m", linestyle=linestyle_options[solver_index])
 
         else:
             if Cl["wave"] != []:
@@ -570,23 +587,28 @@ class ProgramPage(CTkFrame):
                 self.Cd_plot.add_line(angles, Cd["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
                 self.CL_Cd_plot.add_line(angles, CL_Cd["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
                 self.C_MLE_plot.add_line(angles, C_Mle["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
+                self.C_MLE_plot.add_line(angles, C_Mle["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
             if Cl["ackeret"] != []:
                 self.CL_plot.add_line(angles, Cl["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
                 self.Cd_plot.add_line(angles, Cd["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
                 self.CL_Cd_plot.add_line(angles, CL_Cd["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
+                self.CLvCd_plot.add_line(Cd["ackeret"], Cl["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
                 self.C_MLE_plot.add_line(angles, C_Mle["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])
             if Cl["supersonic_friction"] != []:
                 self.CL_plot.add_line(angles, Cl["supersonic_friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
                 self.Cd_plot.add_line(angles, Cd["supersonic_friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
                 self.CL_Cd_plot.add_line(angles, CL_Cd["supersonic_friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+                self.CLvCd_plot.add_line(Cd["supersonic_friction"], Cl["supersonic_friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
             if Cl["supersonic_combined"] != []:
                 self.CL_plot.add_line(angles, Cl["supersonic_combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
                 self.Cd_plot.add_line(angles, Cd["supersonic_combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
                 self.CL_Cd_plot.add_line(angles, CL_Cd["supersonic_combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
+                self.CLvCd_plot.add_line(Cd["supersonic_combined"], Cl["supersonic_combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
             if Cl["panel"] != []:
                 self.CL_plot.add_line(angles, Cl["panel"], "Panel Method Forces", color="r", linestyle=linestyle_options[solver_index])
                 self.Cd_plot.add_line(angles, Cd["panel"], "Panel Method Forces", color="r", linestyle=linestyle_options[solver_index])
                 self.CL_Cd_plot.add_line(angles, CL_Cd["panel"], "Panel Method Forces", color="r", linestyle=linestyle_options[solver_index])
+                self.CLvCd_plot.add_line(Cd["panel"], Cl["panel"], "Panel Method Forces", color="r", linestyle=linestyle_options[solver_index])
                 self.C_MLE_plot.add_line(angles, C_Mle["panel"], "Panel Method Forces", color="r", linestyle=linestyle_options[solver_index])
             if Cl["kutta"] != []:
                 self.CL_plot.add_line(angles, Cl["kutta"], "Panel Method Kutta", color="b", linestyle=linestyle_options[solver_index])
@@ -594,14 +616,17 @@ class ProgramPage(CTkFrame):
                 self.CL_plot.add_line(angles, Cl["subsonic_friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
                 self.Cd_plot.add_line(angles, Cd["subsonic_friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
                 self.CL_Cd_plot.add_line(angles, CL_Cd["subsonic_friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+                self.CLvCd_plot.add_line(Cd["subsonic_friction"], Cl["subsonic_friction"], "Skin Frictions", color="g", linestyle=linestyle_options[solver_index])
             if Cl["subsonic_combined(p)"] != []:
                 self.CL_plot.add_line(angles, Cl["subsonic_combined(p)"], "Combined (P)", color="y", linestyle=linestyle_options[solver_index])
                 self.Cd_plot.add_line(angles, Cd["subsonic_combined(p)"], "Combined (P)", color="y", linestyle=linestyle_options[solver_index])
                 self.CL_Cd_plot.add_line(angles, CL_Cd["subsonic_combined(p)"], "Combined (P)", color="y", linestyle=linestyle_options[solver_index])
+                self.CLvCd_plot.add_line(Cd["subsonic_combined(p)"], Cl["subsonic_combined(p)"], "Combined (P)", color="y", linestyle=linestyle_options[solver_index])
             if Cl["subsonic_combined(k)"] != []:
                 self.CL_plot.add_line(angles, Cl["subsonic_combined(k)"], "Combined (k)", color="m", linestyle=linestyle_options[solver_index])
                 self.Cd_plot.add_line(angles, Cd["subsonic_combined(k)"], "Combined (k)", color="m", linestyle=linestyle_options[solver_index])
                 self.CL_Cd_plot.add_line(angles, CL_Cd["subsonic_combined(k)"], "Combined (k)", color="m", linestyle=linestyle_options[solver_index])
+                self.CLvCd_plot.add_line(Cd["subsonic_combined(k)"], Cl["subsonic_combined(k)"], "Combined (k)", color="m", linestyle=linestyle_options[solver_index])
 
         self.command_interface.show_message(f"New data plotted for Airfoil '{self.Airfoils[solver_index].name}'", False)
 

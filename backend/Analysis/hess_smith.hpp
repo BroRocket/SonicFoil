@@ -16,6 +16,12 @@ class HessSmith {
     double V;
     double AoA;
     double gamma;
+    // perhaps remove these once you figure out the way to implement best
+    std::vector<double> x;
+    std::vector<double> y;
+    std::vector<double> teta;
+    std::vector<double> xi;
+    std::vector<double> yi;
     Matrix A_ij;
     std::vector<double> b_i;
     std::vector<Segment> airfoil_segments;

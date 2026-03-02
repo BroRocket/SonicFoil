@@ -21,7 +21,7 @@ Result Solver::solve_single(std::string method, double AoA, double M0, double P0
             AerodynamicForces(HessSmithfoil, AoA, P0, M0);
             if (method[1] == 'd') {
                 Airfoil dragfoil = airfoil_template;
-                skin_friction_supersonic(HessSmithfoil, dragfoil, AoA);
+                skin_friction_subsonic(HessSmithfoil, dragfoil, AoA);
                 return Result(std::nullopt, std::nullopt, std::nullopt, HessSmithfoil, std::nullopt, dragfoil);
             } else {
                 return Result(std::nullopt, std::nullopt, std::nullopt, HessSmithfoil, std::nullopt, std::nullopt);
@@ -31,7 +31,7 @@ Result Solver::solve_single(std::string method, double AoA, double M0, double P0
             HessSmithfoil.Forces.Cd = 0;
             if (method[1] == 'd') {
                 Airfoil dragfoil = airfoil_template;
-                skin_friction_supersonic(HessSmithfoil, dragfoil, AoA);
+                skin_friction_subsonic(HessSmithfoil, dragfoil, AoA);
                 return Result(std::nullopt, std::nullopt, std::nullopt, std::nullopt, HessSmithfoil, dragfoil);
             } else {
                 return Result(std::nullopt, std::nullopt, std::nullopt, std::nullopt, HessSmithfoil, std::nullopt);
@@ -43,7 +43,7 @@ Result Solver::solve_single(std::string method, double AoA, double M0, double P0
             kutta_airfoil.Forces.Cd = 0;
             if (method[1] == 'd') {
                 Airfoil dragfoil = airfoil_template;
-                skin_friction_supersonic(HessSmithfoil, dragfoil, AoA);
+                skin_friction_subsonic(HessSmithfoil, dragfoil, AoA);
                 return Result(std::nullopt, std::nullopt, std::nullopt, HessSmithfoil, kutta_airfoil, dragfoil);
             } else {
                 return Result(std::nullopt, std::nullopt, std::nullopt, HessSmithfoil, kutta_airfoil, std::nullopt);
@@ -264,8 +264,7 @@ double Solver::HessSmith_method(Airfoil &airfoil, double alpha, double M0, doubl
     HessSmith panel_solver(airfoil, alpha, M0, T0);
     airfoil = panel_solver.solve(P0, T0, rho0);
     return panel_solver.kutta_Cl;
-    // Need to add subsonic drag and then also add Kutt lift versus aerodynamic forces computed lift check difference
-    // Need to find best way to return the result
+   
 };
 
 
@@ -464,7 +463,7 @@ FrictionForces Solver::compute_surface_skin_friction_subsonic(std::vector<Segmen
         double panel_length = segs[i].length;
         double U_e = segs[i].state.M * std::sqrt(gamma*R*segs[i].state.T);   // tangential velocity from panel method
         double distance = s + panel_length;
-        double dynamic_viscoity = (1.458e-6 * std::pow(segs[i].state.T, 1.5))/(segs[i].state.T + 110.4);
+        double dynamic_viscoity = (1.458e-6 * std::pow(segs[i].state.T, 1.5))/(segs[i].state.T + 110.4); // is tis wrong
 
         double Re_s = (segs[i].state.rho * U_e * distance) / dynamic_viscoity;
 

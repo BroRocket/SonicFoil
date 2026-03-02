@@ -1,5 +1,6 @@
 from typing import Any, Tuple
 from customtkinter import *
+import matplotlib.pyplot as plt
 
 from frontend.pages import program, start, airfoil_editor
 
@@ -35,3 +36,4 @@ class Application(CTk):
 
 if __name__ == "__main__": 
     Application()
+    

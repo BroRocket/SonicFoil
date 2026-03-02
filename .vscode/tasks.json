@@ -7,10 +7,17 @@
             "command": "C:/msys64/mingw64/bin/g++.exe",
             "args": [
                 "-g",
+                "backend/main.cpp",
+                "backend/Airfoil/airfoil.cpp",
+                "backend/Analysis/oblique_shock.cpp",
+                "backend/Analysis/oblique_expansion.cpp",
+                "backend/Analysis/hess_smith.cpp",
+                "backend/Solvers/aerodynamic_forces.cpp",
+                "backend/Solvers/solver.cpp",
                 "backend/Tools/matrix.cpp",
                 "-I", "backend",
                 "-o",
-                "matrix.exe"
+                "main.exe"
             ],
             "group": {
                 "kind": "build",
