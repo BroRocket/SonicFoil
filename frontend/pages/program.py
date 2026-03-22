@@ -21,7 +21,7 @@ def new_solver_page():
     page.pack(padx=5, pady=5, fill="both", expand=True)
 
 def open_airfoil():
-    filename = filedialog.askopenfilename(initialdir = os.path.join(os.getcwd(), "Airfoil Files"), title = "Select a File", filetypes = (("Airfoil files", "*.dat*"),("all files", "*.*")))
+    filename = filedialog.askopenfilename(initialdir = os.path.join(os.getcwd(), "Airfoils"), title = "Select a File", filetypes = (("Airfoils", "*.dat*"),("all files", "*.*")))
     window = CTkToplevel()
     page = ProgramPage(window)
     page.pack(padx=5, pady=5, fill="both", expand=True) 
@@ -279,7 +279,7 @@ class ProgramPage(CTkFrame):
 
 
     def _get_available_projects(self) -> list:
-        cur_dir = os.path.join(os.getcwd(), "Airfoil Files")
+        cur_dir = os.path.join(os.getcwd(), "Airfoils")
         if os.path.exists(cur_dir):
             available_files = []
             dir_items = os.scandir(cur_dir)
@@ -292,7 +292,7 @@ class ProgramPage(CTkFrame):
         return ["None"]
     
     def _browse_files(self) -> None:
-        filename = filedialog.askopenfilename(initialdir = os.path.join(os.getcwd(), "Airfoil Files"), title = "Select a File", filetypes = (("Airfoil files", "*.dat*"),("all files", "*.*")))
+        filename = filedialog.askopenfilename(initialdir = os.path.join(os.getcwd(), "Airfoils"), title = "Select a File", filetypes = (("Airfoils", "*.dat*"),("all files", "*.*")))
         self.load_airfoil_file_opt.set(filename)
         
     def _load_airfoil(self) -> None:
@@ -306,8 +306,8 @@ class ProgramPage(CTkFrame):
                 ui_messages.gui_error(f'Entered filename "{filename}" is not the proper ".dat" format')
                 return
             filepath = filename   
-        elif os.path.exists(os.path.join(os.getcwd(), "Airfoil Files", filename)):
-            filepath = os.path.join(os.getcwd(), "Airfoil Files", filename)
+        elif os.path.exists(os.path.join(os.getcwd(), "Airfoils", filename)):
+            filepath = os.path.join(os.getcwd(), "Airfoils", filename)
         else:
             ui_messages.gui_error(f'Entered filename "{filename}" does not exist')
             return
@@ -586,7 +586,7 @@ class ProgramPage(CTkFrame):
                 self.CL_plot.add_line(angles, Cl["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
                 self.Cd_plot.add_line(angles, Cd["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
                 self.CL_Cd_plot.add_line(angles, CL_Cd["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
-                self.C_MLE_plot.add_line(angles, C_Mle["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
+                self.CLvCd_plot.add_line(Cd["wave"], Cl["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
                 self.C_MLE_plot.add_line(angles, C_Mle["wave"], "Shock/Expansion", color="r", linestyle=linestyle_options[solver_index])
             if Cl["ackeret"] != []:
                 self.CL_plot.add_line(angles, Cl["ackeret"], "Ackeret", color="b", linestyle=linestyle_options[solver_index])

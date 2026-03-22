@@ -1,6 +1,7 @@
 #pragma once
 #include "Airfoil/airfoil.hpp"
 #include "Solvers/aerodynamic_forces.hpp"
+#include "Analysis/XfoilWarpper.hpp"
 
 #include <cmath>
 #include <string>
@@ -16,17 +17,16 @@ struct FrictionForces {
 class Result {
     public:
     Result() 
-        : wave_solution(std::nullopt), ackeret_solution(std::nullopt), skin_friction_solution_supersonic(std::nullopt), panel_forces_solution(std::nullopt), panel_kutta_solution(std::nullopt), skin_friction_solution_subsonic(std::nullopt) {};
+        : wave_solution(std::nullopt), ackeret_solution(std::nullopt), skin_friction_solution_supersonic(std::nullopt), xfoil_invicid_solution(std::nullopt), xfoil_viscid_solution(std::nullopt) {};
 
-    Result(std::optional<Airfoil> wave, std::optional<Airfoil> ackeret, std::optional<Airfoil> skin_friction_supersonic, std::optional<Airfoil> panel_forces, std::optional<Airfoil> panel_kutta, std::optional<Airfoil> skin_friction_subsonic) : 
-    wave_solution(wave), ackeret_solution(ackeret), skin_friction_solution_supersonic(skin_friction_supersonic), panel_forces_solution(panel_forces), panel_kutta_solution(panel_kutta), skin_friction_solution_subsonic(skin_friction_subsonic) {};
+    Result(std::optional<Airfoil> wave, std::optional<Airfoil> ackeret, std::optional<Airfoil> skin_friction_supersonic, std::optional<Airfoil> xfoil_inviscid, std::optional<Airfoil> xfoil_viscid) : 
+    wave_solution(wave), ackeret_solution(ackeret), skin_friction_solution_supersonic(skin_friction_supersonic), xfoil_invicid_solution(xfoil_inviscid), xfoil_viscid_solution(xfoil_viscid) {};
 
     std::optional<Airfoil> wave_solution; 
     std::optional<Airfoil> ackeret_solution; 
     std::optional<Airfoil> skin_friction_solution_supersonic;
-    std::optional<Airfoil> panel_forces_solution;
-    std::optional<Airfoil> panel_kutta_solution;
-    std::optional<Airfoil> skin_friction_solution_subsonic; 
+    std::optional<Airfoil> xfoil_invicid_solution;
+    std::optional<Airfoil> xfoil_viscid_solution; 
 };
 
 class Solver{
@@ -34,8 +34,8 @@ class Solver{
     Airfoil airfoil_template;
     double gamma;
     double R;
+    XfoilWrapper XFoil = XfoilWrapper();
     
-
     void ackeret_method(Airfoil &airfoil, double alpha, double M0, double P0, double T0, double rho0);
     void waveshock_method(Airfoil &airfoil, double alpha, double M0, double P0, double T0, double rho0);
     double HessSmith_method(Airfoil &airfoil, double alpha, double M0, double P0, double T0, double rho0);
@@ -59,19 +59,5 @@ class Solver{
     Result solve_single(std::string method, double AoA, double M0, double P0, double T0, double rho0);
 
     void solve_range(std::string method, const std::vector<double>& angles, double M0, double P0, double T0, double rho0);
-
-    //Solver(Airfoil &airfoil, std::string method, bool skin_drag, double AoA, double M, double p, double T, double rho, double gamma_ = 1.4);
-
-    void print_solutions(){
-        for (size_t i = 0; i < Results.size(); ++i){
-            std::cout << "Airfoil " << i + 1 << ":\n";
-            // if (Results[i].wave_solution.has_value()){
-            //     Results[i].wave_solution.print_airfoil()
-            // };
-            
-            // Results[i].ackeret_solution.print_airfoil();
-            // Results[i].skin_friction_solution.print_airfoil();
-        };
-    };
    
 };

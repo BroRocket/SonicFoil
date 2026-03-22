@@ -13,45 +13,31 @@ Solver::Solver(Airfoil &airfoil_template, double gamma_, double R_)
 Result Solver::solve_single(std::string method, double AoA, double M0, double P0, double T0, double rho0){
 
     if (M0 < 1.0) {
-
-        Airfoil HessSmithfoil = airfoil_template;   
-        double kutta_Cl = HessSmith_method(HessSmithfoil, AoA, M0, P0, T0, rho0);
         
-        if (method[0] == 'h') {
-            AerodynamicForces(HessSmithfoil, AoA, P0, M0);
-            if (method[1] == 'd') {
-                Airfoil dragfoil = airfoil_template;
-                skin_friction_subsonic(HessSmithfoil, dragfoil, AoA);
-                return Result(std::nullopt, std::nullopt, std::nullopt, HessSmithfoil, std::nullopt, dragfoil);
-            } else {
-                return Result(std::nullopt, std::nullopt, std::nullopt, HessSmithfoil, std::nullopt, std::nullopt);
-            };
-        } else if (method[0] == 'k') {
-            HessSmithfoil.Forces.CL = kutta_Cl;
-            HessSmithfoil.Forces.Cd = 0;
-            if (method[1] == 'd') {
-                Airfoil dragfoil = airfoil_template;
-                skin_friction_subsonic(HessSmithfoil, dragfoil, AoA);
-                return Result(std::nullopt, std::nullopt, std::nullopt, std::nullopt, HessSmithfoil, dragfoil);
-            } else {
-                return Result(std::nullopt, std::nullopt, std::nullopt, std::nullopt, HessSmithfoil, std::nullopt);
-            };
-        }else if (method[0] == 'b'){
-            Airfoil kutta_airfoil = HessSmithfoil;
-            AerodynamicForces(HessSmithfoil, AoA, P0, M0);
-            kutta_airfoil.Forces.CL = kutta_Cl;
-            kutta_airfoil.Forces.Cd = 0;
-            if (method[1] == 'd') {
-                Airfoil dragfoil = airfoil_template;
-                skin_friction_subsonic(HessSmithfoil, dragfoil, AoA);
-                return Result(std::nullopt, std::nullopt, std::nullopt, HessSmithfoil, kutta_airfoil, dragfoil);
-            } else {
-                return Result(std::nullopt, std::nullopt, std::nullopt, HessSmithfoil, kutta_airfoil, std::nullopt);
-            };
+        Airfoil xairfoil = airfoil_template;   
+        double V = M0 * std::sqrt(gamma * R * T0);
+        double mu = 1.716e-5 * pow(T0/273.15, 1.5) * (273.5 + 110.4)/(T0 + 110.4);
+        double Re = (rho0 * V)/mu;
+        AeroData res;
+
+        if (method[0] == 'i') {
+            XFoil.solve(xairfoil, AoA, M0, Re, false); // don't make this return have igt set internally
+            return Result(std::nullopt, std::nullopt, std::nullopt, xairfoil, std::nullopt);
+        } else if (method[0] == 'v') {
+            XFoil.solve(xairfoil, AoA, M0, Re, true);
+            return Result(std::nullopt, std::nullopt, std::nullopt, std::nullopt, xairfoil);
+        } else if (method[0] == 'b'){
+            Airfoil viscfoil = airfoil_template;
+            XFoil.solve(xairfoil, AoA, M0, Re, false);
+            XFoil.solve(viscfoil, AoA, M0, Re, true);
+            return Result(std::nullopt, std::nullopt, std::nullopt, xairfoil, viscfoil);
+
         } else {
             throw std::invalid_argument("Invalid Method");
         };
-        
+         
+
+
     } else { // throw std::invalid_argument("Freestream Mach must be > 1.");
   
     if (method[0] == 'w') {
@@ -65,9 +51,9 @@ Result Solver::solve_single(std::string method, double AoA, double M0, double P0
         if (method[1] == 'd') {
             Airfoil dragfoil = airfoil_template;
             skin_friction_supersonic(wavefoil, dragfoil, AoA);
-            return Result(wavefoil, std::nullopt, dragfoil, std::nullopt, std::nullopt, std::nullopt);
+            return Result(wavefoil, std::nullopt, dragfoil, std::nullopt, std::nullopt);
         } else {
-            return Result(wavefoil, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt);
+            return Result(wavefoil, std::nullopt, std::nullopt, std::nullopt, std::nullopt);
         }
    
     } else if (method[0] == 'a') {
@@ -75,7 +61,7 @@ Result Solver::solve_single(std::string method, double AoA, double M0, double P0
         ackeret_method(ackeretfoil, AoA, M0, P0, T0, rho0);
         AerodynamicForces(ackeretfoil, AoA, P0, M0);
 
-        return Result(std::nullopt, ackeretfoil, std::nullopt, std::nullopt, std::nullopt, std::nullopt);
+        return Result(std::nullopt, ackeretfoil, std::nullopt, std::nullopt, std::nullopt);
 
     } else if (method[0] == 'b') {
         Airfoil wavefoil = airfoil_template;
@@ -90,9 +76,9 @@ Result Solver::solve_single(std::string method, double AoA, double M0, double P0
         if (method[1] == 'd') {
             Airfoil dragfoil = airfoil_template;
             skin_friction_supersonic(wavefoil, dragfoil, AoA);
-            return Result(wavefoil, ackeretfoil, dragfoil, std::nullopt, std::nullopt, std::nullopt);
+            return Result(wavefoil, ackeretfoil, dragfoil, std::nullopt, std::nullopt);
         } else {
-            return Result(wavefoil, ackeretfoil, std::nullopt, std::nullopt, std::nullopt, std::nullopt);
+            return Result(wavefoil, ackeretfoil, std::nullopt, std::nullopt, std::nullopt);
         }
 
         } else {
@@ -108,6 +94,9 @@ void Solver::solve_range(std::string method, const std::vector<double>& angles, 
     success = true;
     error_msg = "N/A";
     Results.clear();
+    XFoil.set_iter(angles[1] - angles[0]);
+    XFoil.set_higher(angles[angles.size()-1]);
+    XFoil.set_lower(angles[0]);
 
     try {
         for (int i = 0; i < angles.size(); i++) {

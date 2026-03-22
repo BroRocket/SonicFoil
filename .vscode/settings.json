@@ -66,5 +66,6 @@
         "valarray": "cpp",
         "variant": "cpp",
         "chrono": "cpp"
-    }
+    },
+    "snyk.advanced.autoSelectOrganization": true
 }

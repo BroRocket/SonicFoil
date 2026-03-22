@@ -11,11 +11,10 @@ int main(){
     Airfoil test_airfoil("C:/Users/Brody Howard/Documents/GitHub/SonicFoil/Airfoil Files/flat_diamond.dat");
     Solver test_solver(test_airfoil);
 
-    Result res = test_solver.solve_single("b", 10* M_PI / 180, 0.2, 101000, 285, 1.225);
-    Airfoil kutta = res.panel_kutta_solution.value();
-    Airfoil panel = res.panel_forces_solution.value();
-    std::cout << "Kutta CL = " << kutta.Forces.CL << " Kutta Cd = " << kutta.Forces.Cd;
-    std::cout << "\nPanel CL = " << panel.Forces.CL << " Panel Cd = " << panel.Forces.Cd << " Panel Cl/Cd = " << panel.Forces.CL_Cd;
+    Result res = test_solver.solve_single("i", 10* M_PI / 180, 0.2, 101000, 285, 1.225);
+    Airfoil foil = res.xfoil_invicid_solution.value();
+    std::cout << "Inviscid CL = " << foil.Forces.CL << " Inviscid Cd = " << foil.Forces.Cd << " Inviscid Cm = " << foil.Forces.C_MLE << " Inviscid CL/Cd = " << foil.Forces.CL_Cd;
+    
 
     // Airfoil test_airfoil("C:/Users/Brody Howard/Documents/GitHub/SonicFoil/Airfoil Files/test.dat");
     // //stest_airfoil.print_airfoil();

@@ -194,25 +194,25 @@ HessSmith::HessSmith(Airfoil &airfoil, double alpha, double M0, double T0, doubl
 
             double p3;
             if (i == j){
-                p3 = PI;
+                p3 = PI_;
             } else {
                 double det = dx1*dy2 - dx2*dy1;
                 double dot = dx2*dx1 + dy2*dy1;
                 p3 = std::atan2(det, dot); // is it the Bij calc?
             }
 
-            double coeff_source = (1.0/(2.0*PI)) * ( std::sin(p1-p2)*std::log(rij1/rij) + std::cos(p1-p2)*p3 );
+            double coeff_source = (1.0/(2.0*PI_)) * ( std::sin(p1-p2)*std::log(rij1/rij) + std::cos(p1-p2)*p3 );
 
-            double coeff_vortex = (1.0/(2.0*PI)) * ( std::cos(p1-p2)*std::log(rij1/rij) - std::sin(p1-p2)*p3 );
+            double coeff_vortex = (1.0/(2.0*PI_)) * ( std::cos(p1-p2)*std::log(rij1/rij) - std::sin(p1-p2)*p3 );
 
             A_mat[i][j] += coeff_source;
             A_mat[i][npt] += coeff_vortex;
 
             if (i == 0 || i == npt-1){
                 A_mat[npt][j] +=
-                    (1.0/(2.0*PI)) * ( std::sin(p1-p2)*p3 - std::cos(p1-p2)*std::log(rij1/rij) );
+                    (1.0/(2.0*PI_)) * ( std::sin(p1-p2)*p3 - std::cos(p1-p2)*std::log(rij1/rij) );
 
-                A_mat[npt][npt] += (1.0/(2.0*PI)) *( std::sin(p1-p2)*std::log(rij1/rij) + std::cos(p1-p2)*p3 );
+                A_mat[npt][npt] += (1.0/(2.0*PI_)) *( std::sin(p1-p2)*std::log(rij1/rij) + std::cos(p1-p2)*p3 );
             }
         }
 
@@ -372,7 +372,7 @@ Airfoil HessSmith::solve(double P0, double T0, double rho0) {
 
             double p3;
             if (i == j)
-                p3 = PI;
+                p3 = PI_;
             else
             {
                 double det = dx1*dy2 - dx2*dy1;
@@ -380,9 +380,9 @@ Airfoil HessSmith::solve(double P0, double T0, double rho0) {
                 p3 = std::atan2(det, dot);
             }
 
-            sum1 += ( std::sin(p1-p2)*p3 - std::cos(p1-p2)*std::log(rij1/rij) ) * (sol[j]/(2.0*PI));
+            sum1 += ( std::sin(p1-p2)*p3 - std::cos(p1-p2)*std::log(rij1/rij) ) * (sol[j]/(2.0*PI_));
 
-            sum2 += ( std::sin(p1-p2)*std::log(rij1/rij) + std::cos(p1-p2)*p3 ) * (gamma/(2.0*PI));
+            sum2 += ( std::sin(p1-p2)*std::log(rij1/rij) + std::cos(p1-p2)*p3 ) * (gamma/(2.0*PI_));
         }
 
         v[i]  = V * std::cos(teta[i]-AoA) + sum1 + sum2;

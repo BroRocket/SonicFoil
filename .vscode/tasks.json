@@ -12,6 +12,7 @@
                 "backend/Analysis/oblique_shock.cpp",
                 "backend/Analysis/oblique_expansion.cpp",
                 "backend/Analysis/hess_smith.cpp",
+                "backend/Analysis/XfoilWrapper.cpp",
                 "backend/Solvers/aerodynamic_forces.cpp",
                 "backend/Solvers/solver.cpp",
                 "backend/Tools/matrix.cpp",

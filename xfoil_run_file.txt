@@ -1,0 +1,12 @@
+PLOP
+G
+
+LOAD "C:\Users\Brody Howard\Documents\GitHub\SonicFoil\Airfoil Files\flat_diamond.dat"
+OPER
+MACH 0.2
+ITER 250
+PACC
+xfoil_output.txt
+
+ASEQ -5 20 0.1
+QUIT
