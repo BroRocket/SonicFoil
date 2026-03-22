@@ -1,7 +1,7 @@
 #pragma once
 #include "Airfoil/airfoil.hpp"
 #include "Solvers/aerodynamic_forces.hpp"
-#include "Analysis/XfoilWarpper.hpp"
+#include "Analysis/XfoilWrapper.hpp"
 
 #include <cmath>
 #include <string>

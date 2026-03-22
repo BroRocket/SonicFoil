@@ -49,13 +49,12 @@ PYBIND11_MODULE(sonicfoil_backend, m) {
             .def_readonly("CL", &FrictionForces::CL);
 
         pybind11::class_<Result>(m, "Result")
-            .def(pybind11::init<std::optional<Airfoil>, std::optional<Airfoil>, std::optional<Airfoil>, std::optional<Airfoil>, std::optional<Airfoil>, std::optional<Airfoil>>())
+            .def(pybind11::init<std::optional<Airfoil>, std::optional<Airfoil>, std::optional<Airfoil>, std::optional<Airfoil>, std::optional<Airfoil>>())
             .def_readonly("wave_solution", &Result::wave_solution)
             .def_readonly("ackeret_solution", &Result::ackeret_solution)
             .def_readonly("skin_friction_solution_supersonic", &Result::skin_friction_solution_supersonic)
-            .def_readonly("panel_forces_solution", &Result::panel_forces_solution)
-            .def_readonly("panel_kutta_solution", &Result::panel_kutta_solution)
-            .def_readonly("skin_friction_solution_subsonic", &Result::skin_friction_solution_subsonic);
+            .def_readonly("xfoil_invicid_solution", &Result::xfoil_invicid_solution)
+            .def_readonly("xfoil_viscid_solution", &Result::xfoil_viscid_solution);
 
         pybind11::class_<Solver>(m, "Solver")
             .def(pybind11::init<Airfoil&,  double>(),

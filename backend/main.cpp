@@ -8,12 +8,14 @@
 
 int main(){
 
-    Airfoil test_airfoil("C:/Users/Brody Howard/Documents/GitHub/SonicFoil/Airfoil Files/flat_diamond.dat");
+    Airfoil test_airfoil("C:/Users/Brody Howard/Documents/GitHub/SonicFoil/Airfoils/flat_diamond.dat");
     Solver test_solver(test_airfoil);
 
-    Result res = test_solver.solve_single("i", 10* M_PI / 180, 0.2, 101000, 285, 1.225);
+    Result res = test_solver.solve_single("b", 8* M_PI / 180, 0.2, 101000, 285, 1.225);
     Airfoil foil = res.xfoil_invicid_solution.value();
-    std::cout << "Inviscid CL = " << foil.Forces.CL << " Inviscid Cd = " << foil.Forces.Cd << " Inviscid Cm = " << foil.Forces.C_MLE << " Inviscid CL/Cd = " << foil.Forces.CL_Cd;
+    Airfoil foil2 = res.xfoil_viscid_solution.value();
+    std::cout << "Inviscid CL = " << foil.Forces.CL << " Inviscid Cd = " << foil.Forces.Cd << " Inviscid Cm = " << foil.Forces.C_MLE << " Inviscid CL/Cd = " << foil.Forces.CL_Cd << "\n";
+    std::cout << "Viscid CL = " << foil2.Forces.CL << " Viscid Cd = " << foil2.Forces.Cd << " Viscid Cm = " << foil2.Forces.C_MLE << " Viscid CL/Cd = " << foil2.Forces.CL_Cd;
     
 
     // Airfoil test_airfoil("C:/Users/Brody Howard/Documents/GitHub/SonicFoil/Airfoil Files/test.dat");

@@ -14,8 +14,8 @@ struct PolarKey {
     bool visc;
 
     bool operator<(const PolarKey& other) const {
-        return std::tie(airfoil_hash, M, Re) <
-               std::tie(other.airfoil_hash, other.M, other.Re);
+        return std::tie(airfoil_hash, M, Re, visc) <
+               std::tie(other.airfoil_hash, other.M, other.Re, other.visc);
     }
 };
 

@@ -24,6 +24,7 @@ sources = [
     "Analysis/oblique_shock.cpp",
     "Analysis/oblique_expansion.cpp",
     "Analysis/hess_smith.cpp",
+    "Analysis/XfoilWrapper.cpp",
     "Solvers/solver.cpp",
     "Solvers/aerodynamic_forces.cpp",
     "Tools/matrix.cpp"

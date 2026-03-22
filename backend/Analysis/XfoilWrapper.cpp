@@ -1,5 +1,5 @@
 
-#include "Analysis/XfoilWarpper.hpp"
+#include "Analysis/XfoilWrapper.hpp"
 
 #include <map>
 
@@ -10,7 +10,7 @@
 
 void XfoilWrapper::solve(Airfoil &airfoil, double AoA, double M, double Re, bool visc){
     // expects degrees no radian
-    AoA *= PI/180;
+    AoA *= 180/PI;
     PolarData data;
     PolarKey key = {airfoil.name, M, Re, visc};
     if (polar_cache.find(key) == polar_cache.end()){
@@ -50,7 +50,7 @@ PolarData XfoilWrapper::run_xfoil(Airfoil airfoil, double M, double Re, bool vis
     script << "PLOP\n";
     script << "G\n\n"; // disable graphics
     // need to update path for portability
-    script << "LOAD " << "\"Airfoils\\" << airfoil.name << ".dat\"\n";
+    script << "LOAD " << "Airfoils\\" << airfoil.name << ".dat\n";
     if (visc){
         script << "PANE\n";
     }
@@ -67,7 +67,7 @@ PolarData XfoilWrapper::run_xfoil(Airfoil airfoil, double M, double Re, bool vis
     script.close();
 
     // need to change this for portability
-    std::string command = "\"C:\\Users\\Brody Howard\\Documents\\XFOIL6.99\\xfoil.exe\" < " + input_file + " > " + xfoil_log_file;
+    std::string command = "\"C:\\Users\\Brody Howard\\Documents\\GitHub\\SonicFoil\\Airfoils\\xfoil.exe\" < " + input_file + " > " + xfoil_log_file + " 2>nul";
     system(command.c_str());
 
     // ---- Parse polar output ----
@@ -95,6 +95,12 @@ PolarData XfoilWrapper::run_xfoil(Airfoil airfoil, double M, double Re, bool vis
     }
 
     polar_stream.close();
+
+    if (polar.AoA.empty()) {
+        throw std::runtime_error("XFOIL failed to generate polar data");
+    }
+    std::filesystem::remove("xfoil_output.txt");
+    std::filesystem::remove("xfoil_run_file.txt");
 
     return polar;
 };

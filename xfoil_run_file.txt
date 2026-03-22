@@ -1,9 +1,11 @@
 PLOP
 G
 
-LOAD "C:\Users\Brody Howard\Documents\GitHub\SonicFoil\Airfoil Files\flat_diamond.dat"
+LOAD Airfoils\flat_diamond.dat
+PANE
 OPER
-MACH 0.2
+VISC 7.08842e+06
+MACH 0.3
 ITER 250
 PACC
 xfoil_output.txt
