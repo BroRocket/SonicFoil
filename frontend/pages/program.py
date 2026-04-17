@@ -6,12 +6,13 @@ from customtkinter import *
 from tkinter import Menu, filedialog, StringVar
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import threading
+import queue
 
 from frontend.utilities import ui_messages
 from frontend.widgets.plot import CTkPlot
 from frontend.widgets.command_prompt import CTkCommand
 import sonicfoil_backend as SonicFoil
-
 
 
 def new_solver_page():
@@ -93,19 +94,27 @@ class ProgramPage(CTkFrame):
 
         self.flow_conditions_input_frm = CTkFrame(self.inputs_frm)
         self.flow_conditions_input_frm.grid_columnconfigure((0, 1, 2, 3) , weight=1)
-        self.flow_conditions_input_frm.grid_rowconfigure((0, 1, 2), weight=1)
+        self.flow_conditions_input_frm.grid_rowconfigure((0, 1, 2, 3), weight=1)
         self.freestream_lbl = CTkLabel(self.flow_conditions_input_frm, text="Freestream Flow Conditions", font=("Arial", 14), anchor="center")
-        self.mach_lbl = CTkLabel(self.flow_conditions_input_frm, text="Mach Number:", font=("Arial", 12), anchor="e")
         self.mach_entry_var = StringVar(value = "1.5")
-        self.mach_entry_var.trace_add('write', self._render_methods)
-        self.method_state = "sub"
+        self.mach_entry_var.trace_add('write', self._mach_trace_call)
+        self.density_entry_var = StringVar(value = "1.225")
+        self.density_entry_var.trace_add('write', self._reynolds_trace_call)
+        self.temperature_entry_var = StringVar(value = "273.15")
+        self.temperature_entry_var.trace_add('write', self._reynolds_trace_call)
+        self.method_state = "sub" ## Tracker for solver state, helper for detmeirning which mehtod visuals to show
+        self.mach_lbl = CTkLabel(self.flow_conditions_input_frm, text="Mach Number:", font=("Arial", 12), anchor="e")
         self.mach_entry = CTkEntry(self.flow_conditions_input_frm, textvariable=self.mach_entry_var)
         self.pressure_lbl = CTkLabel(self.flow_conditions_input_frm, text="Pressure (Pa):", font=("Arial", 12), anchor="e")
         self.pressure_entry = CTkEntry(self.flow_conditions_input_frm, placeholder_text="101325")
         self.density_lbl = CTkLabel(self.flow_conditions_input_frm, text="Density (kg/m^3):", font=("Arial", 12), anchor="e")
-        self.density_entry = CTkEntry(self.flow_conditions_input_frm, placeholder_text="1.225") 
+        self.density_entry = CTkEntry(self.flow_conditions_input_frm, textvariable=self.density_entry_var) 
         self.temperature_lbl = CTkLabel(self.flow_conditions_input_frm, text="Temperature (K):", font=("Arial", 12), anchor="e")
-        self.temperature_entry = CTkEntry(self.flow_conditions_input_frm, placeholder_text="273.15")
+        self.temperature_entry = CTkEntry(self.flow_conditions_input_frm, textvariable=self.temperature_entry_var)
+        self.reynolds_lbl = CTkLabel(self.flow_conditions_input_frm, text="Reynolds Number:", font=("Arial", 12), anchor="e")
+        # Need fucntion to update reynold number
+        self.reynold_entry_var = StringVar(value = "0")
+        self.reynolds_entry = CTkEntry(self.flow_conditions_input_frm, textvariable=self.reynold_entry_var, state="disabled")
 
         self.freestream_lbl.grid(row=0, column=0, columnspan=4, padx=10, pady=(10, 5), sticky="nsew")
         self.mach_lbl.grid(row=1, column=0, padx=(10, 5), pady=(0, 5), sticky="nsew")
@@ -116,11 +125,12 @@ class ProgramPage(CTkFrame):
         self.density_entry.grid(row=2, column=1, padx=(0, 5), pady=(0, 10), sticky="nsew")
         self.temperature_lbl.grid(row=2, column=2, padx=(5, 5), pady=(0, 10), sticky="nsew")
         self.temperature_entry.grid(row=2, column=3, padx=(0 ,10), pady=(0, 10), sticky="nsew")
+        self.reynolds_lbl.grid(row=3, column=0, padx=(10 ,5), pady=(0, 5), sticky="nsew")
+        self.reynolds_entry.grid(row=3, column=1, padx=(0, 5), pady=(0, 5), sticky="nsew")
         self.flow_conditions_input_frm.grid(row=1, column=0, columnspan=4, padx=5, pady=5, sticky="nsew")
 
-        # Make function that renders this based on mach number
-        # call render fucntion
-        self._render_methods()
+        # Function to render correct methods based on Mach number (sueb or supersonic) and sets reynolds
+        self._mach_trace_call()
 
         self.angles_frm = CTkFrame(self.inputs_frm)
         self.angles_frm.grid_rowconfigure((0, 1), weight=1)  # row with TabView
@@ -206,13 +216,22 @@ class ProgramPage(CTkFrame):
 
         self.text_output_frm.grid(row=5, rowspan=2, column=2, columnspan=3, padx=5, pady=5, sticky="nsew")
 
-
-    def _render_methods(self, *args) -> None:  # need to  update varaibles elsewhere  
+    def _mach_trace_call(self, *args) -> None:
         try:
             mach = float(self.mach_entry.get())
+            self._render_methods(mach)
+            self._compute_and_set_reynolds(mach)
         except:
             return
-
+        
+    def _reynolds_trace_call(self, *args) -> None:
+        try:
+            mach = float(self.mach_entry.get())
+            self._compute_and_set_reynolds(mach)
+        except:
+            return
+        
+    def _render_methods(self, mach: float) -> None:  # need to  update varaibles elsewhere  
         if mach >= 1 and self.method_state != "sup":
             if hasattr(self, "method_frame") and self.method_frame is not None: 
                 self.methods_frm.destroy()
@@ -265,7 +284,21 @@ class ProgramPage(CTkFrame):
                 self.supersonic_friction_var.set("off") # check if changes
 
         elif self.method_state == "sub":
-            pass
+            pass # no longer needed since using xfoil wrapper may ocme back if introduce own subsonic solver
+
+    def _compute_and_set_reynolds(self, mach: float):
+        try:
+            t = float(self.temperature_entry.get())
+            rho = float(self.density_entry.get())
+            v =  mach * math.sqrt(1.4 * 287 * t)
+            mu = 1.716e-5 * ((t/273.15)**1.5) * ((273.15 + 110.4)/(t + 110.4))
+            Re = (rho * v)/mu
+            self.reynold_entry_var.set(str(Re))
+            ## set reynolds number to computed value 
+        except Exception as e:
+            ## set reynolds number to invalid
+            self.reynold_entry_var.set("Invalid")
+        return
 
 
     def _get_available_projects(self) -> list:
@@ -404,15 +437,19 @@ class ProgramPage(CTkFrame):
 
         if mach > 5:
             ui_messages.gui_error("Mach number is out of allowbale regime. Mach Number must be within M > 5")
+            self.command_interface.show_message("Solve Aborted", True)
             return
         elif pressure <= 0:
             ui_messages.gui_error("Pressure cannot be below zero")
+            self.command_interface.show_message("Solve Aborted", True)
             return
         elif density <= 0:
             ui_messages.gui_error("Density must be greater than zero")
+            self.command_interface.show_message("Solve Aborted", True)
             return
         elif temperature < 0:
             ui_messages.gui_error("Temperature in Kelvin cannot be less than zero")
+            self.command_interface.show_message("Solve Aborted", True)
             return
 
         active_tab = self.angles_tabs.get()
@@ -427,9 +464,11 @@ class ProgramPage(CTkFrame):
 
             if start > end:
                 ui_messages.gui_error("Start angle cannot be greater than end angle")
+                self.command_interface.show_message("Solve Aborted", True)
                 return
             elif step > end - start:
                 ui_messages.gui_error("Step size cannot be greater than difference of start and end")
+                self.command_interface.show_message("Solve Aborted", True)
                 return
 
             AoA = []
@@ -441,21 +480,61 @@ class ProgramPage(CTkFrame):
 
         if len(self.Solvers) < 1:
             ui_messages.gui_error("Please load in an Airfoil to use the solver")
+            self.command_interface.show_message("Solve Aborted", True)
             return
 
-        self._clear_results_plots()
+        self.solve_btn.configure(state="disabled")
 
+        self.result_queue = queue.Queue()
+        thread = threading.Thread(target=self._solve_task, args=(method, AoA, mach, pressure, density, temperature, self.result_queue), daemon=True)
+        
+        thread.start()
+        self._poll_queue()
+
+    def _solve_task(self, method, AoA, mach, pressure, density, temperature, queue) -> None:
+        try:
+            for i, solver in enumerate(self.Solvers):
+                queue.put(("progress", f"Running airfoil {i+1}/{len(self.Solvers)}: {self.Airfoils[i].name}"))
+                solver.solve_range(method, AoA, mach, pressure, temperature, density)
+
+                if solver.success is True: # queue message instead
+                    queue.put(("progress", f"Solver Completed Running for Airofil '{self.Airfoils[i].name}'"))
+                else:
+                    queue.put(("progress", f"Solver encountered following error on Airfoil '{self.Airfoils[i].name}':\n{solver.error_msg}\n Computed values up to error will be plotted"))
+                
+            queue.put(("done", AoA))
+        except Exception as e:
+            queue.put(("error", str(e)))
+
+    def _poll_queue(self):
+        try:
+            while True:
+                msg_type, data = self.result_queue.get_nowait()
+
+                if msg_type == "done":
+                    self._handle_results(data)
+                    self.command_interface.show_message("Task Complete\n", True)
+                    self.solve_btn.configure(state="normal")
+                    return
+
+                elif msg_type == "progress":
+                    self.command_interface.show_message(f"{data}", False) # add more here
+
+                elif msg_type == "error":
+                    self.command_interface.show_message(f"Error: {data}", True)
+                    self.solve_btn.configure(state="normal")
+                    return
+
+        except queue.Empty:
+            self.after(100, self._poll_queue) 
+    
+    def _handle_results(self, AoA):
+        self._clear_results_plots() # do all the plotting
         for i, solver in enumerate(self.Solvers):
-            solver.solve_range(method, AoA, mach, pressure, temperature, density)
-
             if solver.success is True:
-                self.command_interface.show_message(f"Solver Completed Running for Airofil '{self.Airfoils[i].name}'", False)
                 self._update_result_plots(solver, AoA, i)
             else:
-                self.command_interface.show_message(f"Solver encountered following error on Airfoil '{self.Airfoils[i].name}':\n{solver.error_msg}\n Computed values up to error will be plotted", False)
                 self._update_result_plots(solver, AoA[:len(solver.Results)], i)
-        
-        self.command_interface.show_message("Task Complete\n", True)
 
     def _update_result_plots(self, solver, AoA: list, solver_index: int) -> None:
 

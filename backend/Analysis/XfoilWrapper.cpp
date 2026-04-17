@@ -22,16 +22,17 @@ void XfoilWrapper::solve(Airfoil &airfoil, double AoA, double M, double Re, bool
     }
 
     /// need to expand the analysis if iter or low alfa or high alfa has changed 
-    if (data.AoA[0] > lower_AoA){
+    if (data.requested_lower > lower_AoA){
         data = run_xfoil(airfoil, M, Re, visc);
         polar_cache[key] = data;
-    } else if (data.AoA.back() < higher_AoA){
+    } else if (data.requested_upper < higher_AoA){
         data = run_xfoil(airfoil, M, Re, visc);
         polar_cache[key] = data;
-    } else if ((data.AoA[1] - data.AoA[0]) > iter_AoA){
+    } else if (data.requested_step > iter_AoA){
         data = run_xfoil(airfoil, M, Re, visc);
         polar_cache[key] = data;
     }; 
+
     
     AeroData res = interpolate(data, AoA);
     airfoil.Forces.CL = res.CL;
@@ -46,6 +47,12 @@ void XfoilWrapper::solve(Airfoil &airfoil, double AoA, double M, double Re, bool
 PolarData XfoilWrapper::run_xfoil(Airfoil airfoil, double M, double Re, bool visc){
     PolarData polar;
 
+    if (std::filesystem::exists(polar_results_file)){
+        std::filesystem::remove(polar_results_file);
+        std::filesystem::remove(input_file);
+        std::filesystem::remove(xfoil_log_file);
+    }
+
     std::ofstream script(input_file);
     script << "PLOP\n";
     script << "G\n\n"; // disable graphics
@@ -59,7 +66,7 @@ PolarData XfoilWrapper::run_xfoil(Airfoil airfoil, double M, double Re, bool vis
         script << "VISC " << Re << "\n";
     };
     script << "MACH " << M << "\n";
-    script << "ITER 250\n";
+    script << "ITER 200\n";
     script << "PACC\n";
     script << polar_results_file << "\n\n";
     script << "ASEQ " << lower_AoA << " " << higher_AoA << " " << iter_AoA << "\n";
@@ -98,14 +105,27 @@ PolarData XfoilWrapper::run_xfoil(Airfoil airfoil, double M, double Re, bool vis
 
     if (polar.AoA.empty()) {
         throw std::runtime_error("XFOIL failed to generate polar data");
+    } else if (polar.AoA.size() < 3) {
+        throw std::runtime_error("Insufficient XFOIL data returned");
     }
-    std::filesystem::remove("xfoil_output.txt");
-    std::filesystem::remove("xfoil_run_file.txt");
+
+    polar.requested_lower = lower_AoA;
+    polar.requested_upper = higher_AoA;
+    polar.requested_step  = iter_AoA;  
 
     return polar;
 };
 
 AeroData XfoilWrapper::interpolate(PolarData data, double AoA){
+    if (AoA < data.AoA.front()){
+        // need to fix this as it fails at zero. 
+        throw std::invalid_argument("XFoil failed to solve full solution, particularly at an angle of attack less than " + std::to_string(data.AoA.front()));
+    };
+
+    if (AoA > data.AoA.back()){
+        throw std::invalid_argument("XFoil failed to solve full solution, particularly at an angle of attack greater than " + std::to_string(data.AoA.back()));
+    };
+
     size_t low = 0;
     size_t high = 1;;
     for (size_t i = 0; i < data.AoA.size(); ++i){

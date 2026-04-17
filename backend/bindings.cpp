@@ -61,20 +61,22 @@ PYBIND11_MODULE(sonicfoil_backend, m) {
                     pybind11::arg("airfoil"),
                     pybind11::arg("gamma_") = 1.4
                 )
-            .def("solve_single", &Solver::solve_single,
+            .def("solve_single", &Solver::solve_single, //depreicated as solve single never actually used
                 pybind11::arg("method"),
                 pybind11::arg("AoA"),
                 pybind11::arg("M0"),
                 pybind11::arg("P0"),
                 pybind11::arg("T0"),
-                pybind11::arg("rho0"))
+                pybind11::arg("rho0"),
+                pybind11::call_guard<pybind11::gil_scoped_release>()) 
             .def("solve_range", &Solver::solve_range,
                 pybind11::arg("method"),
                 pybind11::arg("angles"),
                 pybind11::arg("M0"),
                 pybind11::arg("P0"),
                 pybind11::arg("T0"),
-                pybind11::arg("rho0"))
+                pybind11::arg("rho0"),
+                pybind11::call_guard<pybind11::gil_scoped_release>()) // this allows nice threading to handle how long xfoil takes and relaeas the GIL
             .def_readonly("Results", &Solver::Results)
             .def_readonly("success", &Solver::success)
             .def_readonly("error_msg", &Solver::error_msg);

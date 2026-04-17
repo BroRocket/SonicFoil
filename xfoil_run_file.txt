@@ -4,11 +4,11 @@ G
 LOAD Airfoils\flat_diamond.dat
 PANE
 OPER
-VISC 7.08842e+06
-MACH 0.3
-ITER 250
+VISC 9.45123e+06
+MACH 0.4
+ITER 200
 PACC
 xfoil_output.txt
 
-ASEQ -5 20 0.1
+ASEQ 0 10 0.1
 QUIT

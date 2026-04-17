@@ -24,6 +24,10 @@ struct PolarData {
     std::vector<double> CL;
     std::vector<double> Cd;
     std::vector<double> Cm;
+
+    double requested_lower;
+    double requested_upper;
+    double requested_step;
 };
 
 struct AeroData {
@@ -41,8 +45,8 @@ class XfoilWrapper {
     std::string xfoil_log_file = "xfoil_log.txt";
 
     double iter_AoA = 0.1; //default AoA step size
-    double lower_AoA = -5;
-    double higher_AoA = 20;
+    double lower_AoA = 0;
+    double higher_AoA = 10;
     std::map<PolarKey, PolarData> polar_cache;
 
     PolarData run_xfoil(Airfoil airfoil, double M, double Re, bool visc);
@@ -53,19 +57,19 @@ class XfoilWrapper {
     void set_iter(double AoA_step_size){
         AoA_step_size *= 180/PI;
         if (AoA_step_size < iter_AoA){
-        iter_AoA = AoA_step_size;
+            iter_AoA = AoA_step_size;
         };
     };
     void set_lower(double AoA_lower_bound){
         AoA_lower_bound *= 180/PI;
         if (AoA_lower_bound < lower_AoA){
-        lower_AoA = AoA_lower_bound;
+            lower_AoA = AoA_lower_bound;
         };
     };
     void set_higher(double AoA_higher_bound){
         AoA_higher_bound *= 180/PI;
         if (AoA_higher_bound > higher_AoA){
-        higher_AoA = AoA_higher_bound;
+            higher_AoA = AoA_higher_bound;
         };
     };
 
