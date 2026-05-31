@@ -1,14 +1,14 @@
 PLOP
 G
 
-LOAD Airfoils\flat_diamond.dat
+LOAD Airfoils\NACA2408.dat
 PANE
 OPER
-VISC 9.45123e+06
-MACH 0.4
+VISC 1.41768e+07
+MACH 0.6
 ITER 200
 PACC
 xfoil_output.txt
 
-ASEQ 0 10 0.1
+ASEQ -10 20 0.1
 QUIT

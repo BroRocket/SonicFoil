@@ -67,7 +67,7 @@ class CTkCommand(CTkTextbox):
             return ""
 
         elif cmd == "help":
-            return "Available commands: help, echo <text>, clear, exit/quit"
+            return "Available commands:\n help \n echo <text> \n save <> \n clear \n exit/quit"
 
         elif cmd.startswith("echo "):
             return cmd[5:]
@@ -88,16 +88,40 @@ class CTkCommand(CTkTextbox):
             cmd = cmd[5:]
             inputs = cmd[5:].split()
 
-            configs = []
-            for input in inputs:
-                if input[0] == "-":
-                    configs.append(input[1:])
+            selected_configs = {"methods": [], "coef": []}
+            allowed_configs = {"methods": ["wave", "ackeret", "friction", "combined", "inviscid", "viscid"], "coef": ["cl", "cd", "cl/cd", "cmle"]}
+            for i, input in enumerate(inputs):
+                if input == "-methods":
+                    j = i + 1
+                    method = inputs[j].lower()
+                    while len(inputs) < j and method[0] != "-":
+                        if method in allowed_configs["methods"]:
+                            selected_configs["methods"].append(method)
+                        else:
+                            self.show_message(f"Method '{inputs[j]}' not recognized. Please choose from the following methods: {selected_configs['methods']}", True)
+                        j += 1
+                        method = inputs[j].lower()
+                elif input == "-coef":
+                    j = i + 1
+                    coeficient = inputs[j].lower()
+                    while len(inputs) < j and coeficient[0] != "-":
+                        if coeficient in allowed_configs["coef"]:
+                            selected_configs["coef"].append(coeficient)
+                        else:
+                            self.show_message(f"Coefficient '{inputs[j]}' not recognized. Please choose from the following coeffecients: {selected_configs['coef']}", True)
+                        j += 1
+                        coeficient = inputs[j].lower()
 
-            if cmd.startswith("data "):
-               self.master.master._save_data(configs)
+            if len(selected_configs["methods"]) == 0:
+                selected_configs["methods"] = allowed_configs["methods"]
+            if len(selected_configs["coef"]) == 0:
+                selected_configs["coef"] = allowed_configs["coef"]
+       
+            if cmd.startswith("data"):
+               self.master.master._save_data(selected_configs)
 
             elif cmd.startswith("plot"):
-                self.master.master._save_plots(configs)
+                self.master.master._save_plots(selected_configs)
                 
             return ""
 
