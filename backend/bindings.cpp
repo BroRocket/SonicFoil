@@ -46,7 +46,8 @@ PYBIND11_MODULE(sonicfoil_backend, m) {
 
         pybind11::class_<FrictionForces>(m, "FrictionForces")
             .def_readonly("CD", &FrictionForces::CD)
-            .def_readonly("CL", &FrictionForces::CL);
+            .def_readonly("CL", &FrictionForces::CL)
+            .def_readonly("C_Mle", &FrictionForces::C_Mle);
 
         pybind11::class_<Result>(m, "Result")
             .def(pybind11::init<std::optional<Airfoil>, std::optional<Airfoil>, std::optional<Airfoil>, std::optional<Airfoil>, std::optional<Airfoil>>())

@@ -12,6 +12,7 @@
 struct FrictionForces {
     double CD;
     double CL;
+    double C_Mle;
 };
 
 class Result {

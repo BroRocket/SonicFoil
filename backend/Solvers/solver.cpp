@@ -304,6 +304,10 @@ FrictionForces Solver::compute_surface_skin_friction_supersonic(const std::vecto
     double s = 0;
     bool transition = true; 
 
+    double x_distance_sum = 0;
+    double y_distance_sum = 0;
+    double moment = 0;
+
     for (size_t i = 0; i < segs.size(); ++i){
 
         double panel_distance = segs[i].length;
@@ -408,17 +412,21 @@ FrictionForces Solver::compute_surface_skin_friction_supersonic(const std::vecto
         
         };
 
-        double F_x_body = panel_drag_coefficient * cos(segs[i].angle);
-        double F_y_body = panel_drag_coefficient * sin(segs[i].angle);
+        double F_x_body = panel_drag_coefficient * cos(segs[i].angle); //coefficient as well so already noramlized
+        double F_y_body = panel_drag_coefficient * sin(segs[i].angle); //coefficient as well so already noramlized
 
         drag_coefficient += F_x_body * cos(alpha) + F_y_body * sin(alpha);
         lift_coefficient += F_y_body * cos(alpha) - F_x_body * sin(alpha);
+
+        moment += (F_x_body * (y_distance_sum + (segs[i].y_distance / 2))) - (F_y_body * (x_distance_sum + (segs[i].x_distance / 2)));
+        x_distance_sum += segs[i].x_distance;
+        y_distance_sum += segs[i].y_distance;
 
         s += panel_distance;
 
     };
 
-    return {drag_coefficient, lift_coefficient};
+    return {drag_coefficient, lift_coefficient, moment};
 
 }
 
@@ -433,6 +441,7 @@ void Solver::skin_friction_supersonic(Airfoil &airfoil, Airfoil &result_airfoil,
 
     result_airfoil.Forces.CL = top_friction.CL + bottom_friction.CL;
     result_airfoil.Forces.Cd = top_friction.CD + bottom_friction.CD;
+    result_airfoil.Forces.C_MLE = top_friction.C_Mle + bottom_friction.C_Mle;
     result_airfoil.Forces.CL_Cd = result_airfoil.Forces.CL/result_airfoil.Forces.Cd;
  
 }

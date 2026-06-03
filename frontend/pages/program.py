@@ -546,7 +546,7 @@ class ProgramPage(CTkFrame):
         Cl = {"wave": [], "ackeret": [], "friction": [], "combined": [], "inviscid": [], "viscid": []}
         Cd = {"wave": [], "ackeret": [], "friction": [], "combined": [],  "viscid": []}
         CL_Cd = {"wave": [], "ackeret": [], "friction": [], "combined": [], "viscid": []}
-        C_Mle = {"wave": [], "ackeret": [], "inviscid": [], "viscid": []} # curently no Cmle for friction
+        C_Mle = {"wave": [], "ackeret": [], "friction": [], "combined": [], "inviscid": [], "viscid": []} # curently no Cmle for friction
         #currently no xcp and ycp plottingg
 
         #update this
@@ -570,6 +570,7 @@ class ProgramPage(CTkFrame):
                 Cl["friction"].append(supersonic_friction.Forces.CL)
                 Cd["friction"].append(supersonic_friction.Forces.Cd)
                 CL_Cd["friction"].append(supersonic_friction.Forces.CL_Cd)
+                C_Mle["friction"].append(supersonic_friction.Forces.C_MLE)
             if inviscid is not None:
                 Cl["inviscid"].append(inviscid.Forces.CL)
                 C_Mle["inviscid"].append(inviscid.Forces.C_MLE)
@@ -584,6 +585,7 @@ class ProgramPage(CTkFrame):
                 Cl["combined"].append(Cl["wave"][i]+Cl["friction"][i])
                 Cd["combined"].append(Cd["wave"][i]+Cd["friction"][i])
                 CL_Cd["combined"] = [combined_cl / combined_cd for combined_cl, combined_cd in zip(Cl["combined"], Cd["combined"])]
+                C_Mle["combined"].append(C_Mle["wave"][i] + C_Mle["friction"][i])
 
         angles = [rad * 180 / math.pi for rad in AoA]
 
@@ -607,11 +609,13 @@ class ProgramPage(CTkFrame):
                 self.Cd_plot.add_point(angles, Cd["friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
                 self.CL_Cd_plot.add_point(angles, CL_Cd["friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
                 self.CLvCd_plot.add_point(Cd["friction"], Cl["friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+                self.C_MLE_plot.add_point(angles, C_Mle["friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
             if Cl["combined"] != []:
                 self.CL_plot.add_point(angles, Cl["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
                 self.Cd_plot.add_point(angles, Cd["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
                 self.CL_Cd_plot.add_point(angles, CL_Cd["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
                 self.CLvCd_plot.add_point(Cd["combined"], Cl["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
+                self.C_MLE_plot.add_point(angles, C_Mle["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
             if Cl["inviscid"] != []:
                 self.CL_plot.add_point(angles, Cl["inviscid"], "Xfoil Inviscid", color="r", linestyle=linestyle_options[solver_index])
                 self.C_MLE_plot.add_point(angles, C_Mle["inviscid"], "viscid", color="r", linestyle=linestyle_options[solver_index])
@@ -640,11 +644,13 @@ class ProgramPage(CTkFrame):
                 self.Cd_plot.add_line(angles, Cd["friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
                 self.CL_Cd_plot.add_line(angles, CL_Cd["friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
                 self.CLvCd_plot.add_line(Cd["friction"], Cl["friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
+                self.C_MLE_plot.add_line(angles, C_Mle["friction"], "Skin Friction", color="g", linestyle=linestyle_options[solver_index])
             if Cl["combined"] != []:
                 self.CL_plot.add_line(angles, Cl["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
                 self.Cd_plot.add_line(angles, Cd["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
                 self.CL_Cd_plot.add_line(angles, CL_Cd["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
                 self.CLvCd_plot.add_line(Cd["combined"], Cl["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
+                self.C_MLE_plot.add_line(angles, C_Mle["combined"], "Combined", color="y", linestyle=linestyle_options[solver_index])
             if Cl["inviscid"] != []:
                 self.CL_plot.add_line(angles, Cl["inviscid"], "Xfoil Inviscid", color="r", linestyle=linestyle_options[solver_index])
                 self.C_MLE_plot.add_line(angles, C_Mle["inviscid"], "Xfoil Inviscid", color="r", linestyle=linestyle_options[solver_index])

@@ -66,7 +66,7 @@ AerodynamicForces::AerodynamicForces(Airfoil &airfoil_, double AoA, double P, do
         airfoil.Forces.y_cp = y_moment / Axial_force;
     };
     
-    double M_LE = -1 * airfoil.Forces.x_cp * Normal_force;
+    double M_LE = -1 * airfoil.Forces.x_cp * Normal_force + airfoil.Forces.y_cp * Axial_force; // doble check
 
     // dimensionless
     double q = (gamma/2) * P0 * M0 * M0;
