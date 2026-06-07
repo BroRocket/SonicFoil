@@ -10,6 +10,7 @@ import threading
 import queue
 
 from frontend.utilities import ui_messages
+from frontend.utilities import standard_atmosphere
 from frontend.widgets.plot import CTkPlot
 from frontend.widgets.command_prompt import CTkCommand
 import sonicfoil_backend as SonicFoil
@@ -97,40 +98,44 @@ class ProgramPage(CTkFrame):
         self.flow_conditions_input_frm.grid_rowconfigure((0, 1, 2, 3), weight=1)
         self.freestream_lbl = CTkLabel(self.flow_conditions_input_frm, text="Freestream Flow Conditions", font=("Arial", 14), anchor="center")
         self.mach_entry_var = StringVar(value = "1.5")
-        self.mach_entry_var.trace_add('write', self._mach_trace_call)
+        self.mach_entry_var.trace_add('write', self._inputs_trace_call)
+        self.altitude_entry_var = StringVar(value = "0")
+        self.altitude_entry_var.trace_add("write", self._inputs_trace_call)
         self.density_entry_var = StringVar(value = "1.225")
-        self.density_entry_var.trace_add('write', self._reynolds_trace_call)
-        self.temperature_entry_var = StringVar(value = "273.15")
-        self.temperature_entry_var.trace_add('write', self._reynolds_trace_call)
+        self.temperature_entry_var = StringVar(value = "288.16")
+        self.pressure_entry_var = StringVar(value = "101325")
         self.method_state = "sub" ## Tracker for solver state, helper for detmeirning which mehtod visuals to show
         self.mach_lbl = CTkLabel(self.flow_conditions_input_frm, text="Mach Number:", font=("Arial", 12), anchor="e")
         self.mach_entry = CTkEntry(self.flow_conditions_input_frm, textvariable=self.mach_entry_var)
+        self.altitude_lbl = CTkLabel(self.flow_conditions_input_frm, text="Altitude (ft):", font=("Arial", 12), anchor="e")
+        self.altitude_entry = CTkEntry(self.flow_conditions_input_frm, textvariable=self.altitude_entry_var)
         self.pressure_lbl = CTkLabel(self.flow_conditions_input_frm, text="Pressure (Pa):", font=("Arial", 12), anchor="e")
-        self.pressure_entry = CTkEntry(self.flow_conditions_input_frm, placeholder_text="101325")
+        self.pressure_entry = CTkEntry(self.flow_conditions_input_frm, textvariable=self.pressure_entry_var, state="disabled")
         self.density_lbl = CTkLabel(self.flow_conditions_input_frm, text="Density (kg/m^3):", font=("Arial", 12), anchor="e")
-        self.density_entry = CTkEntry(self.flow_conditions_input_frm, textvariable=self.density_entry_var) 
+        self.density_entry = CTkEntry(self.flow_conditions_input_frm, textvariable=self.density_entry_var, state="disabled") 
         self.temperature_lbl = CTkLabel(self.flow_conditions_input_frm, text="Temperature (K):", font=("Arial", 12), anchor="e")
-        self.temperature_entry = CTkEntry(self.flow_conditions_input_frm, textvariable=self.temperature_entry_var)
+        self.temperature_entry = CTkEntry(self.flow_conditions_input_frm, textvariable=self.temperature_entry_var, state="disabled")
         self.reynolds_lbl = CTkLabel(self.flow_conditions_input_frm, text="Reynolds Number:", font=("Arial", 12), anchor="e")
-        # Need fucntion to update reynold number
         self.reynold_entry_var = StringVar(value = "0")
         self.reynolds_entry = CTkEntry(self.flow_conditions_input_frm, textvariable=self.reynold_entry_var, state="disabled")
 
         self.freestream_lbl.grid(row=0, column=0, columnspan=4, padx=10, pady=(10, 5), sticky="nsew")
         self.mach_lbl.grid(row=1, column=0, padx=(10, 5), pady=(0, 5), sticky="nsew")
         self.mach_entry.grid(row=1, column=1, padx=(0, 5), pady=(0, 5), sticky="nsew")
-        self.pressure_lbl.grid(row=1, column=2, padx=(5, 5), pady=(0, 5), sticky="nsew")
-        self.pressure_entry.grid(row=1, column=3, padx=(0 ,10), pady=(0, 5), sticky="nsew")
-        self.density_lbl.grid(row=2, column=0, padx=(10, 5), pady=(0, 10), sticky="nsew")
-        self.density_entry.grid(row=2, column=1, padx=(0, 5), pady=(0, 10), sticky="nsew")
-        self.temperature_lbl.grid(row=2, column=2, padx=(5, 5), pady=(0, 10), sticky="nsew")
-        self.temperature_entry.grid(row=2, column=3, padx=(0 ,10), pady=(0, 10), sticky="nsew")
-        self.reynolds_lbl.grid(row=3, column=0, padx=(10 ,5), pady=(0, 5), sticky="nsew")
-        self.reynolds_entry.grid(row=3, column=1, padx=(0, 5), pady=(0, 5), sticky="nsew")
+        self.altitude_lbl.grid(row=1, column=2, padx=(5, 5), pady=(0, 5), sticky="nsew")
+        self.altitude_entry.grid(row=1, column=3, padx=(0 ,10), pady=(0, 5), sticky="nsew")
+        self.pressure_lbl.grid(row=2, column=2, padx=(5, 5), pady=(0, 5), sticky="nsew")
+        self.pressure_entry.grid(row=2, column=3, padx=(0 ,10), pady=(0, 5), sticky="nsew")
+        self.density_lbl.grid(row=3, column=0, padx=(10, 5), pady=(0, 10), sticky="nsew")
+        self.density_entry.grid(row=3, column=1, padx=(0, 5), pady=(0, 10), sticky="nsew")
+        self.temperature_lbl.grid(row=2, column=0, padx=(10, 5), pady=(0, 5), sticky="nsew")
+        self.temperature_entry.grid(row=2, column=1, padx=(0 ,5), pady=(0, 5), sticky="nsew")
+        self.reynolds_lbl.grid(row=3, column=2, padx=(5 ,5), pady=(0, 10), sticky="nsew")
+        self.reynolds_entry.grid(row=3, column=3, padx=(0, 10), pady=(0, 10), sticky="nsew")
         self.flow_conditions_input_frm.grid(row=1, column=0, columnspan=4, padx=5, pady=5, sticky="nsew")
 
-        # Function to render correct methods based on Mach number (sueb or supersonic) and sets reynolds
-        self._mach_trace_call()
+        # Function to render correct methods based on Mach number (sub or supersonic) and sets reynolds
+        self._inputs_trace_call()
 
         self.angles_frm = CTkFrame(self.inputs_frm)
         self.angles_frm.grid_rowconfigure((0, 1), weight=1)  # row with TabView
@@ -171,7 +176,7 @@ class ProgramPage(CTkFrame):
 
         self.inputs_frm.grid(row=2, column=0, rowspan=5, columnspan=2, padx=5, pady=5, sticky="nsew")
 
-        #############################3
+        #############################
         # plotter frame (use tabview)
         self.plots_frm = CTkFrame(self)
         self.plots_frm.grid_rowconfigure(0, weight=1)
@@ -208,7 +213,7 @@ class ProgramPage(CTkFrame):
 
         self.plots_frm.grid(row=0, column=2, rowspan=5, columnspan=3, padx=5, pady=5, sticky="nsew")
 
-        ##### command interface frame
+        ##### command interface frame 
         self.text_output_frm = CTkFrame(self)
 
         self.command_interface = CTkCommand(self.text_output_frm)
@@ -216,18 +221,12 @@ class ProgramPage(CTkFrame):
 
         self.text_output_frm.grid(row=5, rowspan=2, column=2, columnspan=3, padx=5, pady=5, sticky="nsew")
 
-    def _mach_trace_call(self, *args) -> None:
+    def _inputs_trace_call(self, *args) -> None:
         try:
             mach = float(self.mach_entry.get())
             self._render_methods(mach)
-            self._compute_and_set_reynolds(mach)
-        except:
-            return
-        
-    def _reynolds_trace_call(self, *args) -> None:
-        try:
-            mach = float(self.mach_entry.get())
-            self._compute_and_set_reynolds(mach)
+            altitude = float(self.altitude_entry.get()) * 0.3048 # convert to meters
+            self._compute_and_set_inputs(mach, altitude)
         except:
             return
         
@@ -286,17 +285,24 @@ class ProgramPage(CTkFrame):
         elif self.method_state == "sub":
             pass # no longer needed since using xfoil wrapper may ocme back if introduce own subsonic solver
 
-    def _compute_and_set_reynolds(self, mach: float):
+    def _compute_and_set_inputs(self, mach: float, altitude: float):
         try:
-            t = float(self.temperature_entry.get())
-            rho = float(self.density_entry.get())
+            t, p, rho = standard_atmosphere.get_standard_atmosphere_conditions(altitude)
+
+            self.temperature_entry_var.set(str(round(t, 2)))
+            self.pressure_entry_var.set(str(round(p, 2)))
+            self.density_entry_var.set(str(round(rho, 3)))
+
             v =  mach * math.sqrt(1.4 * 287 * t)
             mu = 1.716e-5 * ((t/273.15)**1.5) * ((273.15 + 110.4)/(t + 110.4))
             Re = (rho * v)/mu
-            self.reynold_entry_var.set(str(Re))
+            self.reynold_entry_var.set(str(round(Re, 2)))
             ## set reynolds number to computed value 
         except Exception as e:
             ## set reynolds number to invalid
+            self.temperature_entry_var.set("Invalid")
+            self.pressure_entry_var.set("Invalid")
+            self.density_entry_var.set("Invalid")
             self.reynold_entry_var.set("Invalid")
         return
 
@@ -695,7 +701,7 @@ class ProgramPage(CTkFrame):
 
         #self.inputs = {"Mach": mach, "Pressure": pressure, "Density": density, "Temperature": temperature}
 
-        run_str = f"M{self.inputs['Mach']}P{self.inputs['Pressure']}D{self.inputs['Density']}T{self.inputs['Temperature']}"
+        run_str = f"M{self.inputs['Mach']}_P{self.inputs['Pressure']}_D{self.inputs['Density']}_T{self.inputs['Temperature']}"
 
         method_to_filename = {
                 "wave":     f"shock_expansion_{run_str}.csv",

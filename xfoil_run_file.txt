@@ -2,13 +2,11 @@ PLOP
 G
 
 LOAD Airfoils\NACA2408.dat
-PANE
 OPER
-VISC 1.41768e+07
-MACH 0.6
+MACH 0.4
 ITER 200
 PACC
 xfoil_output.txt
 
-ASEQ -10 20 0.1
+ASEQ 0 10 0.1
 QUIT

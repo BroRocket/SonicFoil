@@ -47,12 +47,11 @@ void XfoilWrapper::solve(Airfoil &airfoil, double AoA, double M, double Re, bool
 PolarData XfoilWrapper::run_xfoil(Airfoil airfoil, double M, double Re, bool visc){
     PolarData polar;
 
-    if (std::filesystem::exists(polar_results_file)){
-        std::filesystem::remove(polar_results_file);
-        std::filesystem::remove(input_file);
-        std::filesystem::remove(xfoil_log_file);
-    }
+    std::filesystem::remove(polar_results_file);
+    std::filesystem::remove(input_file);
+    std::filesystem::remove(xfoil_log_file);
 
+   
     std::ofstream script(input_file);
     script << "PLOP\n";
     script << "G\n\n"; // disable graphics
@@ -74,7 +73,10 @@ PolarData XfoilWrapper::run_xfoil(Airfoil airfoil, double M, double Re, bool vis
     script.close();
 
     // need to change this for portability
-    std::string command = "\"C:\\Users\\Brody Howard\\Documents\\GitHub\\SonicFoil\\Airfoils\\xfoil.exe\" < " + input_file + " > " + xfoil_log_file + " 2>nul";
+    std::filesystem::path current_dir = std::filesystem::current_path();
+    std::string filename = "xfoil.exe";
+    std::filesystem::path full_path = current_dir / filename;
+    std::string command = "\"" + full_path.string() + "\"" + " < " + input_file + " > " + xfoil_log_file + " 2>nul";
     system(command.c_str());
 
     // ---- Parse polar output ----
