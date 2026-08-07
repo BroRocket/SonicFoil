@@ -434,12 +434,17 @@ class ProgramPage(CTkFrame):
         self.command_interface.show_message("Starting Task...", False)
         method = self._get_method()
         if method == "": 
+            self.command_interface.show_message("No solver method chosen, abondoning task", True)
             return
 
-        mach = float(self.mach_entry.get()) if self.mach_entry.get() != '' else 1.0
-        pressure = float(self.pressure_entry.get()) if self.pressure_entry.get() != '' else 101325
-        density = float(self.density_entry.get()) if self.density_entry.get() != '' else 1.225
-        temperature = float(self.temperature_entry.get()) if self.temperature_entry.get() != '' else 273.15
+        try:
+            mach = float(self.mach_entry.get()) if self.mach_entry.get() != '' else 1.0
+            pressure = float(self.pressure_entry.get()) if self.pressure_entry.get() != '' else 101325
+            density = float(self.density_entry.get()) if self.density_entry.get() != '' else 1.225
+            temperature = float(self.temperature_entry.get()) if self.temperature_entry.get() != '' else 273.15
+        except Exception as e:
+            self.command_interface.show_message(f"The following error was encountered with the user inputs: {e}", True)
+            return
 
         if mach > 5:
             ui_messages.gui_error("Mach number is out of allowbale regime. Mach Number must be within M > 5")
@@ -459,30 +464,35 @@ class ProgramPage(CTkFrame):
             return
 
         active_tab = self.angles_tabs.get()
-        if active_tab == "Single":
 
-            AoA = [float(self.single_angle_entry.get()) * math.pi / 180] if self.single_angle_entry.get() != '' else [0]
+        try:
+            if active_tab == "Single":
 
-        else:
-            start = float(self.angle_range_left_entry.get()) * math.pi / 180 if self.angle_range_left_entry.get() != '' else 0
-            end = float(self.angle_range_right_entry.get()) * math.pi / 180 if self.angle_range_right_entry.get() != '' else 5 * math.pi / 180
-            step = float(self.angle_range_step_size_entry.get()) * math.pi / 180 if self.angle_range_step_size_entry.get() != '' else 1 * math.pi / 180
+                AoA = [float(self.single_angle_entry.get()) * math.pi / 180] if self.single_angle_entry.get() != '' else [0]
 
-            if start > end:
-                ui_messages.gui_error("Start angle cannot be greater than end angle")
-                self.command_interface.show_message("Solve Aborted", True)
-                return
-            elif step > end - start:
-                ui_messages.gui_error("Step size cannot be greater than difference of start and end")
-                self.command_interface.show_message("Solve Aborted", True)
-                return
+            else:
+                start = float(self.angle_range_left_entry.get()) * math.pi / 180 if self.angle_range_left_entry.get() != '' else 0
+                end = float(self.angle_range_right_entry.get()) * math.pi / 180 if self.angle_range_right_entry.get() != '' else 5 * math.pi / 180
+                step = float(self.angle_range_step_size_entry.get()) * math.pi / 180 if self.angle_range_step_size_entry.get() != '' else 1 * math.pi / 180
 
-            AoA = []
-            a = start
-            while a <= end + 1e-12:
-                AoA.append(a)
-                a += step
-            AoA = [round(angle, 8) for angle in AoA]
+                if start > end:
+                    ui_messages.gui_error("Start angle cannot be greater than end angle")
+                    self.command_interface.show_message("Solve Aborted", True)
+                    return
+                elif step > end - start:
+                    ui_messages.gui_error("Step size cannot be greater than difference of start and end")
+                    self.command_interface.show_message("Solve Aborted", True)
+                    return
+        except Exception as e:
+            self.command_interface.show_message(f"The following error was encountered with the user inputs: {e}", True)
+            return
+
+        AoA = []
+        a = start
+        while a <= end + 1e-12:
+            AoA.append(a)
+            a += step
+        AoA = [round(angle, 8) for angle in AoA]
 
         if len(self.Solvers) < 1:
             ui_messages.gui_error("Please load in an Airfoil to use the solver")
